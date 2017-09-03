@@ -14,7 +14,7 @@ from tokens import SQL
 from tokens import admins
 import traceback
 import logging
-logging.basicConfig(filename='/home/matilda-live/python_error.log', level=logging.DEBUG, 
+logging.basicConfig(filename='/home/python_error.log', level=logging.DEBUG, 
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
 
