@@ -5,7 +5,7 @@ Matilda is currently still in the development stage. Currently, I only have time
 
 ## Supported Sites
 * Straits Times
-* Todayonline
+* ChannelNewsAsia
 
 ## Licensing
 Matilda is licensed under the [Affero General Public License Version 3](LICENSE).
