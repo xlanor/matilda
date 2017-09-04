@@ -13,7 +13,7 @@ Matilda is licensed under the [Affero General Public License Version 3](LICENSE)
 ## Sample
 A sample version of this bot is currently running on Telegram, under @matilda_jk_bot. 
 
-<img src="https://giant.gfycat.com/PepperyUnrulyHarborseal.gif" width="200"></img>
+![](https://giant.gfycat.com/PepperyUnrulyHarborseal.gif)
 
 ## Credits
 * Thanks to [LFlare](https://github.com/LFlare) for giving me the idea, and letting me take a look at his source code when I was stuck.
