@@ -13,9 +13,10 @@ Matilda is licensed under the [Affero General Public License Version 3](LICENSE)
 ## Sample
 A sample version of this bot is currently running on Telegram, under @matilda_jk_bot. 
 
-<img src="http://i.imgur.com/BmQmrTG.png" width="250"></img>
-<img src="http://i.imgur.com/fZ6lk7k.png" width = "250"></img>
-<img src="http://i.imgur.com/1YanSS4.png" width = "250"></img>
+<img src="http://i.imgur.com/EhXg6ry.png" width="200"></img>
+<img src="http://i.imgur.com/G7KMshH.png" width = "200"></img>
+<img src="http://i.imgur.com/fR4WXZ1.png" width = "200"></img>
+<img src="http://i.imgur.com/RPiYWbo.png" width = "200"></img>
 
 ## Credits
 * Thanks to [LFlare](https://github.com/LFlare) for giving me the idea, and letting me take a look at his source code when I was stuck.
@@ -35,9 +36,6 @@ You can open an issue here to contact me regarding bugs.
 * /st_search <terms> (Searches for ST Articles)
 * /st_new (Latest five ST Articles)
 
-Currently under development
-* Grabbing of latest articles from RSS feed
-
 ## Usage
 Install the following python libraries
 * python-telegram-bot
@@ -46,6 +44,8 @@ Install the following python libraries
 * Python String Utilities
 * dateutil
 * PyMySQL
+
+Setup a MySQL Database. A schema will be provided shortly.
 
 
 Update token.py with your bot's api token
