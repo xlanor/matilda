@@ -35,6 +35,8 @@ You can open an issue here to contact me regarding bugs.
 * /cna_new (Latest five CNA Articles)
 * /st_search <terms> (Searches for ST Articles)
 * /st_new (Latest five ST Articles)
+* /st_rand (Randomly generates 5 articles from StraitsTimes)
+* /cna_rand (Randomly generates 5 articles from CNA)
 
 ## How does Matilda work?
 If you have the article url, you can simply run /st or /cna <article url>
