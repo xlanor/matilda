@@ -19,7 +19,7 @@ class SQL():
 			return "<dbname>"
 class admins():
 	def adminlist(x):
-		adminlist = ['adminuserid','adminuserid1'] #list of admin user ids.
+		adminlist = ['adminuserid','adminuserid1'] #list of admin user ids. For actual live data, you do not need to put '' as the live data will be an int.
 		if x in adminlist:
 			return "admin"
 		else:
