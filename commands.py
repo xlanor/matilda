@@ -48,7 +48,6 @@ class Commands():
 		supportsites += "Please type /cmd for more information! \n"
 		supportsites += "- Straits Times \n"
 		supportsites += "- CNA \n"
-		#"""Hi, these are the sites currently supported by Matilda \nPlease type /cmd for more information! \n- Straits Times \n- TodayOnline \n- CNA \n- Mothership"""
 		bot.sendMessage(chat_id=update.message.chat_id, text=supportsites, parse_mode='Markdown')
 	def commands (bot,update):
 		commandstring = "Hi, this are the commands that I currently support \n"
@@ -374,7 +373,7 @@ class Commands():
 				with closing(conn.cursor()) as cur:
 					try:
 						searchtext = update.message.text
-						if len(searchtext[14:]) < 5:
+						if len(searchtext[11:]) < 5:
 							bot.sendMessage(chat_id=update.message.chat_id, text="""Please enter a longer search query!""",parse_mode='Markdown')
 						else:
 							newsearch = searchtext[14:]
@@ -440,7 +439,7 @@ class Commands():
 				with closing(conn.cursor()) as cur:
 					try:
 						searchtext = update.message.text
-						if len(searchtext[14:]) < 5:
+						if len(searchtext[12:]) < 5:
 							bot.sendMessage(chat_id=update.message.chat_id, text="""Please enter a longer search query!""",parse_mode='Markdown')
 						else:
 							newsearch = searchtext[14:]
