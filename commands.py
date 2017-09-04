@@ -14,6 +14,7 @@ from tokens import SQL
 from tokens import admins
 import traceback
 import logging
+import random
 logging.basicConfig(filename='/home/python_error.log', level=logging.DEBUG, 
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
@@ -403,6 +404,109 @@ class Commands():
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
 					except Exception as e: print(e)
 		except Exception as e: print(e)
+	def strand(bot,update):
+		try:
+			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
+				conn.autocommit(True)
+				with closing(conn.cursor()) as cur:
+					try:
+						cur.execute("""SELECT MAX(st_id) FROM StraitsTimes""")
+						if cur.rowcount > 0:
+							data = cur.fetchone()
+							maxval = int(data[0])
+							randomidlist = []
+							try:
+								randomidlist = random.sample(range(1,maxval),5)
+								checkidlist = ["false"]
+								keyboard = []
+								while "false" in checkidlist:
+									del checkidlist[:]
+									del keyboard[:]
+									counter = 1
+									replystring = "These are 5 random stories from StraitsTimes.\n\n"
+									for each in randomidlist:
+										try:
+											cur.execute("""SELECT * FROM StraitsTimes WHERE st_id = %s""",(each,))
+											if cur.rowcount > 0:
+												row = cur.fetchone()
+												ms_id = "st-"+str(row[0])
+												label= "Story "+ str(counter)
+												keyboard.append([InlineKeyboardButton(label, callback_data=ms_id)])
+												replystring += str(counter) + ". "
+												replystring += row[1]
+												replystring += "\n"									
+												counter +=1
+												checkidlist.append("true")
+											else:
+												checkidlist.append("false")
+										except:
+											traceback.print_exc()
+											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+								replystring += "\n"	
+								replystring += "Please select an option below."
+								reply_markup = InlineKeyboardMarkup(keyboard)
+								update.message.reply_text(replystring, reply_markup=reply_markup)
+							except:
+								traceback.print_exc()
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+					except:
+						traceback.print_exc()
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+		except:
+			traceback.print_exc()
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+	def cnarand(bot,update):
+		try:
+			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
+				conn.autocommit(True)
+				with closing(conn.cursor()) as cur:
+					try:
+						cur.execute("""SELECT MAX(cna_id) FROM ChannelNewsAsia""")
+						if cur.rowcount > 0:
+							data = cur.fetchone()
+							maxval = int(data[0])
+							randomidlist = []
+							try:
+								randomidlist = random.sample(range(1,maxval),5)
+								checkidlist = ["false"]
+								keyboard = []
+								while "false" in checkidlist:
+									del checkidlist[:]
+									del keyboard[:]
+									counter = 1
+									replystring = "These are 5 random stories from Channel News Asia.\n\n"
+									for each in randomidlist:
+										try:
+											cur.execute("""SELECT * FROM ChannelNewsAsia WHERE cna_id = %s""",(each,))
+											if cur.rowcount > 0:
+												row = cur.fetchone()
+												ms_id = "cn-"+str(row[0])
+												label= "Story "+ str(counter)
+												keyboard.append([InlineKeyboardButton(label, callback_data=ms_id)])
+												replystring += str(counter) + ". "
+												replystring += row[1]
+												replystring += "\n"									
+												counter +=1
+												checkidlist.append("true")
+											else:
+												checkidlist.append("false")
+										except:
+											traceback.print_exc()
+											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+								replystring += "\n"	
+								replystring += "Please select an option below."
+								reply_markup = InlineKeyboardMarkup(keyboard)
+								update.message.reply_text(replystring, reply_markup=reply_markup)
+							except:
+								traceback.print_exc()
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+					except:
+						traceback.print_exc()
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+		except:
+			traceback.print_exc()
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+	
 	def cnanew(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
