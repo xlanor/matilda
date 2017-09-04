@@ -45,10 +45,11 @@ Install the following python libraries
 * dateutil
 * PyMySQL
 
+
 Setup a MySQL Database. A schema will be provided shortly.
 
 
-Update token.py with your bot's api token
+Update token.py with your bot's api token, mysql information, and the list of user ids for admin.
 
 
 Start your bot with 
