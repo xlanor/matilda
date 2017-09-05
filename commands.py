@@ -58,8 +58,10 @@ class Commands():
 		commandstring += "- /cna <article> (Channel News Asia Scraper) \n"
 		commandstring += "- /cna\_search <search terms> (Channel News Asia search) \n"
 		commandstring += "- /cna\_new (Channel News Asia latest 5) \n"
+		commandstring += "- /cna\_rand (Channel News Asia random 5 articles) \n"
 		commandstring += "- /st\_search <search terms> (Straits Times search) \n"
 		commandstring += "- /st\_new (StraitsTimes latest 5) \n"
+		commandstring += "- /st\_new (StraitsTimes random 5 articles) \n"
 
 		bot.sendMessage(chat_id=update.message.chat_id, text=commandstring, parse_mode='Markdown')
 	def aboutme(bot,update):
@@ -89,6 +91,7 @@ class Commands():
 									cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
 									if cur.rowcount == 0:
 										cur.execute("""INSERT INTO Userdb VALUES(%s,%s)""",(chatid,chattype,))
+									print(sturl)
 									cur.execute("""SELECT * FROM Retrievedmsg WHERE retrievedurl = %s""",(sturl,))
 									if cur.rowcount == 0:
 										headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
@@ -103,9 +106,9 @@ class Commands():
 										publishedobject = []
 										modifiedobject = []
 										for title in titlediv:
-											bodyobject.append("*")
+											bodyobject.append("<b>")
 											bodyobject.append(title.text)
-											bodyobject.append("*")
+											bodyobject.append("</b>")
 											bodyobject.append("\n")
 											bodyobject.append("\n")
 										for postdate in publishdiv:
@@ -116,13 +119,13 @@ class Commands():
 											modifiedobject.append('Updated at: ')
 											moddate = parser.parse(modidate['content'])
 											modifiedobject.append(moddate.strftime("%B %d, %Y %H:%M"))
-										bodyobject.append("_")
+										bodyobject.append("<i>")
 										bodyobject.extend(publishedobject)
-										bodyobject.append("_")
+										bodyobject.append("</i>")
 										bodyobject.append("\n")
-										bodyobject.append("_")
+										bodyobject.append("<i>")
 										bodyobject.extend(modifiedobject)
-										bodyobject.append("_")
+										bodyobject.append("</i>")
 										bodyobject.append("\n")
 										bodyobject.append("\n")
 										for div in mydivs:
@@ -135,7 +138,7 @@ class Commands():
 											p = div.findAll('p',{"class": None})
 											for para in p:
 												if para.text is not "":
-													parastring = escape_markdown(para.text)
+													parastring = para.text
 													bodyobject.append(parastring)
 													bodyobject.append("\n")
 													bodyobject.append("\n")
@@ -174,7 +177,7 @@ class Commands():
 											keyboard = []
 											keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
 											reply_markup = InlineKeyboardMarkup(keyboard)
-											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='Markdown')
+											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 									else:
 										cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(sturl,))
 										if cur.rowcount > 0:
@@ -185,7 +188,7 @@ class Commands():
 											keyboard = []
 											keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
 											reply_markup = InlineKeyboardMarkup(keyboard)
-											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='Markdown')
+											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 							except:
 								traceback.print_exc()
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
@@ -234,9 +237,9 @@ class Commands():
 										publishedobject = []
 										modifiedobject = []
 										for title in titlediv:
-											bodyobject.append("*")
+											bodyobject.append("<b>")
 											bodyobject.append(title.text)
-											bodyobject.append("*")
+											bodyobject.append("</b>")
 											bodyobject.append("\n")
 											bodyobject.append("\n")
 										for postdate in publishdiv:
@@ -248,13 +251,13 @@ class Commands():
 												modifiedobject.append('Updated at: ')
 												modifdate = parser.parse(modidate['datetime'])
 												modifiedobject.append(modifdate.strftime("%B %d, %Y %H:%M"))
-										bodyobject.append("_")
+										bodyobject.append("<i>")
 										bodyobject.extend(publishedobject)
-										bodyobject.append("_")
+										bodyobject.append("</i>")
 										bodyobject.append("\n")
-										bodyobject.append("_")
+										bodyobject.append("<i>")
 										bodyobject.extend(modifiedobject)
-										bodyobject.append("_")
+										bodyobject.append("</i>")
 										bodyobject.append("\n")
 										bodyobject.append("\n")
 										for div in mydivs:
@@ -283,7 +286,7 @@ class Commands():
 											for para in p:
 												if para.text is not "":
 													if para.text.strip() is not "":
-														parastring = escape_markdown(para.text)
+														parastring = para.text
 														#strip1 = parastring.replace("*","")
 														#strip2 = strip1.replace("_","")
 														#strip3 = strip2.replace("`","")
@@ -323,7 +326,7 @@ class Commands():
 											keyboard = []
 											keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
 											reply_markup = InlineKeyboardMarkup(keyboard)
-											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='Markdown')
+											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 									else:
 										cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(cnaurl,))
 										if cur.rowcount > 0:
@@ -334,7 +337,7 @@ class Commands():
 											keyboard = []
 											keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
 											reply_markup = InlineKeyboardMarkup(keyboard)
-											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='Markdown')
+											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 							except Exception as e: print(e)
 					except Exception as e: print(e)
 		except Exception as e: print(e)
@@ -639,7 +642,7 @@ class Commands():
 									keyboard = []
 									keyboard.append([InlineKeyboardButton('Show less ↑', callback_data=hideid)])
 									reply_markup = InlineKeyboardMarkup(keyboard)
-									bot.edit_message_text(text=text,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='Markdown')
+									bot.edit_message_text(text=text,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 								else:
 									data = cur.fetchall()
 									counter = 0
@@ -650,7 +653,7 @@ class Commands():
 											keyboard = []
 											keyboard.append([InlineKeyboardButton('Show less ↑', callback_data=hideid)])
 											reply_markup = InlineKeyboardMarkup(keyboard)
-											bot.edit_message_text(text=text,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='Markdown')
+											bot.edit_message_text(text=text,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 											cur.execute("""INSERT INTO multiplemsg VALUES(%s,%s,%s)""",(multiid,each[0],chatid))
 											counter+=1
 										else:
@@ -659,7 +662,7 @@ class Commands():
 											keyboard = []
 											keyboard.append([InlineKeyboardButton('Show less ↑', callback_data=hideid)])
 											reply_markup = InlineKeyboardMarkup(keyboard)
-											sent = bot.sendMessage(chat_id=query.message.chat_id, text=text,reply_markup=reply_markup,parse_mode='Markdown')
+											sent = bot.sendMessage(chat_id=query.message.chat_id, text=text,reply_markup=reply_markup,parse_mode='HTML')
 											cur.execute("""INSERT INTO multiplemsg VALUES(%s,%s,%s)""",(sent.message_id,each[0],chatid))
 						else:
 							cur.execute("""SELECT b.retrievedtext FROM multiplemsg a left join Retrievedmsg b on a.retrievedid = b.retrievedid where a.multiid =  %s""",(multiid,))
@@ -670,7 +673,7 @@ class Commands():
 							keyboard = []
 							keyboard.append([InlineKeyboardButton('Show less ↑', callback_data=hideid)])
 							reply_markup = InlineKeyboardMarkup(keyboard)
-							bot.edit_message_text(text=text,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='Markdown')
+							bot.edit_message_text(text=text,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 					elif dbtype == "hd": #named hd because you're hiding msg
 						artid = query.data[3:]
 						cur.execute("""SELECT retrievedtext FROM Retrievedmsg WHERE retrievedid = %s""",(artid,))
@@ -682,7 +685,7 @@ class Commands():
 							keyboard = []
 							keyboard.append([InlineKeyboardButton('Show more ↓', callback_data=showid)])
 							reply_markup = InlineKeyboardMarkup(keyboard)
-							bot.edit_message_text(text=hiddentext,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='Markdown')
+							bot.edit_message_text(text=hiddentext,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 
 		except Exception as e: print(e)
 
