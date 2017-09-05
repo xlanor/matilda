@@ -139,9 +139,10 @@ class Commands():
 											for para in p:
 												if para.text is not "":
 													parastring = para.text
-													bodyobject.append(parastring)
-													bodyobject.append("\n")
-													bodyobject.append("\n")
+													if not parastring.isspace():
+														bodyobject.append(parastring)
+														bodyobject.append("\n")
+														bodyobject.append("\n")
 										str1 = ''.join(bodyobject)
 										result = 0
 										for char in str1:
@@ -151,16 +152,20 @@ class Commands():
 												n = 4000
 												checklist=["false"]
 												while "false" in checklist:
-													del checklist[:]
-													n = n-1
-													msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
-													for msg in msglist:
-														lastchar = (msg.strip()[-1])
-														if msg[-1] not in string.whitespace:
-															checklist.append("false")
-														else:
-															checklist.append("true")
-												msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
+													try:
+														del checklist[:]
+														n = n-1
+														msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
+														for msg in msglist:
+															if msg[-1] not in string.whitespace:
+																checklist.append("false")
+															else:
+																checklist.append("true")
+													except:
+														del checklist[:]
+														checklist = ["true"]
+														n = 4000
+														msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
 												for msg in msglist:
 													cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(sturl,msg,))
 											else:
@@ -285,11 +290,8 @@ class Commands():
 											p = div.findAll('p',{"class": None})
 											for para in p:
 												if para.text is not "":
-													if para.text.strip() is not "":
-														parastring = para.text
-														#strip1 = parastring.replace("*","")
-														#strip2 = strip1.replace("_","")
-														#strip3 = strip2.replace("`","")
+													parastring = para.text
+													if not parastring.isspace():
 														bodyobject.append(parastring)
 														bodyobject.append("\n")
 														bodyobject.append("\n")
@@ -302,15 +304,21 @@ class Commands():
 												n = 4000
 												checklist=["false"]
 												while "false" in checklist:
-													del checklist[:]
-													n = n-1
-													msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
-													for msg in msglist:
-														lastchar = (msg.strip()[-1])
-														if msg[-1] not in string.whitespace:
-															checklist.append("false")
-														else:
-															checklist.append("true")	
+													try:
+														del checklist[:]
+														n = n-1
+														print(n)
+														msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
+														for msg in msglist:
+															if msg[-1] not in string.whitespace:
+																checklist.append("false")
+															else:
+																checklist.append("true")
+													except:
+														del checklist[:]
+														checklist = ["true"]
+														n = 4000
+														msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
 												msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
 												for msg in msglist:
 													cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(cnaurl,msg,))
