@@ -55,7 +55,7 @@ Install the following python libraries
 
 
 Setup a MySQL Database. A schema will be provided shortly.
-
+![exampledb](/examples/dbschema_matilda.png)
 
 Update token.py with your bot's api token, mysql information, and the list of user ids for admin.
 
