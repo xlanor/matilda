@@ -35,6 +35,9 @@ You can open an issue here to contact me regarding bugs.
 * /st_rand (Randomly generates 5 articles from StraitsTimes)
 * /cna_rand (Randomly generates 5 articles from CNA)
 
+## Admin Commands
+* /mega <text> (Sends a message to all chats that the bot has previously been used in. To use, add your user id to tokens.py)
+
 ## How does Matilda work?
 If you have the article url, you can simply run /st or /cna <article url>
 
