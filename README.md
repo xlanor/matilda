@@ -54,8 +54,10 @@ Install the following python libraries
 * PyMySQL
 
 
-Setup a MySQL Database. A schema will be provided shortly.
+Setup a MySQL Database. 
 ![exampledb](/examples/dbschema_matilda.png)
+
+Run the scripts found in the [Matilda-tools](https://github.com/xlanor/matilda-tools) folder. More information is avaliable there. This will enable you to grab new articles as they come out.
 
 Update token.py with your bot's api token, mysql information, and the list of user ids for admin.
 
