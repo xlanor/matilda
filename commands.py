@@ -148,7 +148,7 @@ class Commands():
 										for char in str1:
 											result +=1
 										try:
-											if (result) > 4096:
+											if (result) > 4000:
 												n = 4000
 												checklist=["false"]
 												while "false" in checklist:
@@ -300,7 +300,7 @@ class Commands():
 										for char in str1:
 											result +=1
 										try:
-											if (result) > 4096:
+											if (result) > 4000:
 												n = 4000
 												checklist=["false"]
 												while "false" in checklist:
@@ -319,12 +319,13 @@ class Commands():
 														checklist = ["true"]
 														n = 4000
 														msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
-												msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
 												for msg in msglist:
 													cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(cnaurl,msg,))
 											else:
 												cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(cnaurl,str1,))
-										except Exception as e: print(e)
+										except:
+											traceback.print_exc()
+											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
 										cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(cnaurl,))
 										if cur.rowcount > 0:
 											data = cur.fetchone()
