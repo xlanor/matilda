@@ -24,3 +24,7 @@ class admins():
 			return "admin"
 		else:
 			return "notadmin"
+class errorchannel():
+	def errorchannel(x):
+		if x == "error":
+			return "<error channel id>" #id of the channel that you're using to broadcast your error messages

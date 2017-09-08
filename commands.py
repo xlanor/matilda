@@ -10,11 +10,12 @@ import html2text
 import html
 import pymysql
 from contextlib import closing
-from tokens import SQL
-from tokens import admins
+from tokens import SQL, admins, errorchannel
 import traceback
 import logging
 import random
+import time
+
 logging.basicConfig(filename='/home/python_error.log', level=logging.DEBUG, 
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
@@ -35,15 +36,20 @@ class Commands():
 							for each in data:
 								try:
 									bot.sendMessage(chat_id=each[0], text=megamessage,parse_mode='HTML')
+									time.sleep(0.5)
 								except:
+									catcherror = traceback.format_exc()
+									bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+									bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
 									pass
 						else:
-							bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+							bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 					else:
 						bot.sendMessage(chat_id=update.message.chat_id, text="""HTTP 418: I'm a teapot""",parse_mode='Markdown')
-		except Exception as e:
-			logger.error(e)
-			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+		except:	
+			catcherror = traceback.format_exc()
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def supported (bot,update):
 		supportsites = "Hi, these are the sites currently supported by Matilda \n"
 		supportsites += "Please type /cmd for more information! \n"
@@ -61,8 +67,7 @@ class Commands():
 		commandstring += "- /cna\_rand (Channel News Asia random 5 articles) \n"
 		commandstring += "- /st\_search <search terms> (Straits Times search) \n"
 		commandstring += "- /st\_new (StraitsTimes latest 5) \n"
-		commandstring += "- /st\_new (StraitsTimes random 5 articles) \n"
-
+		commandstring += "- /st\_rand (StraitsTimes random 5 articles) \n"
 		bot.sendMessage(chat_id=update.message.chat_id, text=commandstring, parse_mode='Markdown')
 	def aboutme(bot,update):
 		bot.sendMessage(chat_id=update.message.chat_id, text="My name is Matilda, and I love to read. If you're using me, so do you! Check me out on github (https://github.com/xlanor/matilda)")
@@ -171,8 +176,9 @@ class Commands():
 											else:
 												cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(sturl,str1,))
 										except:
-											traceback.print_exc()
-											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+											catcherror = traceback.format_exc()
+											bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 										cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(sturl,))
 										if cur.rowcount > 0:
 											data = cur.fetchone()
@@ -195,15 +201,18 @@ class Commands():
 											reply_markup = InlineKeyboardMarkup(keyboard)
 											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 							except:
-								traceback.print_exc()
-								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+								catcherror = traceback.format_exc()
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 		
-					except:
-						traceback.print_exc()
-						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+					except:						
+						catcherror = traceback.format_exc()
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 		except:
-			traceback.print_exc()
-			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+			catcherror = traceback.format_exc()
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def cna(bot, update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
@@ -324,8 +333,9 @@ class Commands():
 											else:
 												cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(cnaurl,str1,))
 										except:
-											traceback.print_exc()
-											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+											catcherror = traceback.format_exc()
+											bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 										cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(cnaurl,))
 										if cur.rowcount > 0:
 											data = cur.fetchone()
@@ -347,9 +357,19 @@ class Commands():
 											keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
 											reply_markup = InlineKeyboardMarkup(keyboard)
 											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
-							except Exception as e: print(e)
-					except Exception as e: print(e)
-		except Exception as e: print(e)
+							except:
+								catcherror = traceback.format_exc()
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+					except:
+						catcherror = traceback.format_exc()
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+
+		except:			
+			catcherror = traceback.format_exc()
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def stnew(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
@@ -377,8 +397,14 @@ class Commands():
 							update.message.reply_text(replystring, reply_markup=reply_markup)
 						else:
 							bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
-					except Exception as e: print(e)
-		except Exception as e: print(e)
+					except:
+						catcherror = traceback.format_exc()
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+		except:
+			catcherror = traceback.format_exc()
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def stsearch(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
@@ -414,8 +440,14 @@ class Commands():
 								update.message.reply_text(replystring, reply_markup=reply_markup)
 							else:
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
-					except Exception as e: print(e)
-		except Exception as e: print(e)
+					except:
+						catcherror = traceback.format_exc()
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+		except:
+			catcherror = traceback.format_exc()
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def strand(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
@@ -452,21 +484,25 @@ class Commands():
 											else:
 												checkidlist.append("false")
 										except:
-											traceback.print_exc()
-											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+											error = traceback.format_exc()
+											bot.sendMessage(chat_id=errorchannel.errorchannel(error), text=error,parse_mode='HTML')
+											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 								replystring += "\n"	
 								replystring += "Please select an option below."
 								reply_markup = InlineKeyboardMarkup(keyboard)
 								update.message.reply_text(replystring, reply_markup=reply_markup)
 							except:
-								traceback.print_exc()
-								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+								catcherror = traceback.format_exc()
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 					except:
-						traceback.print_exc()
-						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+						catcherror = traceback.format_exc()
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 		except:
-			traceback.print_exc()
-			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+			catcherror = traceback.format_exc()
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def cnarand(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
@@ -503,22 +539,25 @@ class Commands():
 											else:
 												checkidlist.append("false")
 										except:
-											traceback.print_exc()
-											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+											catcherror = traceback.format_exc()
+											bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 								replystring += "\n"	
 								replystring += "Please select an option below."
 								reply_markup = InlineKeyboardMarkup(keyboard)
 								update.message.reply_text(replystring, reply_markup=reply_markup)
 							except:
-								traceback.print_exc()
-								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+								catcherror = traceback.format_exc()
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 					except:
-						traceback.print_exc()
-						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
+						catcherror = traceback.format_exc()
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 		except:
-			traceback.print_exc()
-			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. Please report this so our trained monkeys can fix it!""",parse_mode='Markdown')
-	
+			catcherror = traceback.format_exc()
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')	
 	def cnanew(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
@@ -546,8 +585,15 @@ class Commands():
 							update.message.reply_text(replystring, reply_markup=reply_markup)
 						else:
 							bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
-					except Exception as e: print(e)
-		except Exception as e: print(e)
+					except:
+						catcherror = traceback.format_exc()
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+	
+		except:
+			catcherror = traceback.format_exc()
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')	
 	def cnasearch(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
@@ -583,8 +629,14 @@ class Commands():
 								update.message.reply_text(replystring, reply_markup=reply_markup)
 							else:
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
-					except Exception as e: print(e)
-		except Exception as e: print(e)
+					except:
+						catcherror = traceback.format_exc()
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+		except:
+			catcherror = traceback.format_exc()
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def search(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
@@ -696,5 +748,8 @@ class Commands():
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=hiddentext,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 
-		except Exception as e: print(e)
+		except:
+			catcherror = traceback.format_exc()
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 
