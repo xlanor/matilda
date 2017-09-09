@@ -1,26 +1,61 @@
 from telegram.ext import Updater
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-import requests
-import string
+from telegram.utils.helpers import escape_html, escape_markdown
+from sumy.parsers.html import HtmlParser
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+from nltk.tokenize import word_tokenize
+from sumy.summarizers.lsa import LsaSummarizer as Summarizer
+from sumy.nlp.stemmers import Stemmer
+from sumy.utils import get_stop_words
 from bs4 import BeautifulSoup
 from datetime import datetime
 from dateutil import parser
-from telegram.utils.helpers import escape_html, escape_markdown
 import html2text
 import html
 import pymysql
 from contextlib import closing
 from tokens import SQL, admins, errorchannel
 import traceback
-import logging
 import random
 import time
-
-logging.basicConfig(filename='/home/python_error.log', level=logging.DEBUG, 
-                    format='%(asctime)s %(levelname)s %(name)s %(message)s')
-logger=logging.getLogger(__name__)
+import requests
+import string
 
 class Commands():
+	def mode(bot,update):
+		try:
+			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
+				conn.autocommit(True)
+				with closing(conn.cursor()) as cur:
+					chatid = update.message.chat_id
+					cur.execute("""SELECT mode FROM Userdb WHERE chatid = %s""",(chatid,))
+					if cur.rowcount == 0:
+						registermsg = "Sorry, you are not registered!"
+						registermsg += "\n"
+						registermsg += "In order to register, please call an article with Matilda."
+						bot.sendMessage(chat_id=update.message.chat_id, text=registermsg,parse_mode='Markdown')
+					else:
+						modetype = update.message.text[6:]
+						if modetype == "Full":
+							cur.execute("""UPDATE Userdb SET mode = 'Full' WHERE chatid = %s""",(int(chatid),))
+							sucessmsg = "Sucessfully updated your preferred mode to Full"
+							bot.sendMessage(chat_id=update.message.chat_id, text=sucessmsg,parse_mode='Markdown')
+						elif modetype == "Trunc":
+							cur.execute("""UPDATE Userdb SET mode = 'Trunc' WHERE chatid = %s""",(int(chatid),))
+							sucessmsg = "Sucessfully updated your preferred mode to Truncated"
+							bot.sendMessage(chat_id=update.message.chat_id, text=sucessmsg,parse_mode='Markdown')
+						else:
+							errormsg = "Sorry, I don't recognize the mode that you have entered!"
+							errormsg += "\n"
+							errormsg += "I only accept either \'Full\' or \'Trunc\' as valid modes"
+							errormsg += "\n"
+							errormsg += "If you think this is a bug, please report it for our trained chinchillas to work on it."
+							bot.sendMessage(chat_id=update.message.chat_id, text=errormsg,parse_mode='Markdown')
+		except:	
+			catcherror = traceback.format_exc()
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def megaphone(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
@@ -60,6 +95,7 @@ class Commands():
 		commandstring = "Hi, this are the commands that I currently support \n"
 		commandstring += "- /aboutme (about the bot) \n"
 		commandstring += "- /cmd (command list) \n"
+		commandstring += "- /mode <Full/Trunc> (Switches between Truncated and Full Article) \n"
 		commandstring += "- /st <article> (Straits Times Scraper) \n"
 		commandstring += "- /cna <article> (Channel News Asia Scraper) \n"
 		commandstring += "- /cna\_search <search terms> (Channel News Asia search) \n"
@@ -88,6 +124,7 @@ class Commands():
 								headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 								result = requests.get(sturl,headers=headers)
 								print(result.status_code)
+								print(sturl)
 								if (result.status_code >= 400):
 									bot.sendMessage(chat_id=update.message.chat_id, text="""This story does not exist!""",parse_mode='Markdown')
 								else:
@@ -95,9 +132,14 @@ class Commands():
 									chattype = update.message.chat.type
 									cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
 									if cur.rowcount == 0:
-										cur.execute("""INSERT INTO Userdb VALUES(%s,%s)""",(chatid,chattype,))
-									print(sturl)
-									cur.execute("""SELECT * FROM Retrievedmsg WHERE retrievedurl = %s""",(sturl,))
+										cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s)""",(chatid,chattype,'Full',))
+									else:
+										data = cur.fetchone()
+										mode = data[2]
+									if mode == "Full":
+										cur.execute("""SELECT * FROM Retrievedmsg WHERE retrievedurl = %s""",(sturl,))
+									else:
+										cur.execute("""SELECT * FROM Truncmsg WHERE retrievedurl = %s""",(sturl,))
 									if cur.rowcount == 0:
 										headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 										r = requests.get(sturl, headers=headers)
@@ -133,73 +175,108 @@ class Commands():
 										bodyobject.append("</i>")
 										bodyobject.append("\n")
 										bodyobject.append("\n")
-										for div in mydivs:
-											blockquote = div.findAll('blockquote')
-											for b in blockquote:
-												b.decompose()
-											a = div.findAll('span')
-											for link in a:
-												link.decompose()
-											p = div.findAll('p',{"class": None})
-											for para in p:
-												if para.text is not "":
-													parastring = para.text
-													if not parastring.isspace():
-														bodyobject.append(parastring)
-														bodyobject.append("\n")
-														bodyobject.append("\n")
-										str1 = ''.join(bodyobject)
-										result = 0
-										for char in str1:
-											result +=1
-										try:
-											if (result) > 4000:
-												n = 4000
-												checklist=["false"]
-												while "false" in checklist:
-													try:
-														del checklist[:]
-														n = n-1
-														msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
-														for msg in msglist:
-															if msg[-1] not in string.whitespace:
-																checklist.append("false")
-															else:
-																checklist.append("true")
-													except:
-														del checklist[:]
-														checklist = ["true"]
-														n = 4000
-														msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
-												for msg in msglist:
-													cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(sturl,msg,))
-											else:
-												cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(sturl,str1,))
-										except:
-											catcherror = traceback.format_exc()
-											bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
-											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
-										cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(sturl,))
-										if cur.rowcount > 0:
-											data = cur.fetchone()
-											retrievedmsg = data[0]
-											spliceretrievedmsg = retrievedmsg[:500]
-											dbid = "db-"+str(data[1])
-											keyboard = []
-											keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
-											reply_markup = InlineKeyboardMarkup(keyboard)
-											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
+										if mode == "Full":
+											for div in mydivs:
+												blockquote = div.findAll('blockquote')
+												for b in blockquote:
+													b.decompose()
+												a = div.findAll('span')
+												for link in a:
+													link.decompose()
+												p = div.findAll('p',{"class": None})
+												for para in p:
+													if para.text is not "":
+														parastring = para.text
+														if not parastring.isspace():
+															bodyobject.append(parastring)
+															bodyobject.append("\n")
+															bodyobject.append("\n")
+											str1 = ''.join(bodyobject)
+											result = 0
+											for char in str1:
+												result +=1
+											try:
+												if (result) > 4000:
+													n = 4000
+													checklist=["false"]
+													while "false" in checklist:
+														try:
+															del checklist[:]
+															n = n-1
+															msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
+															for msg in msglist:
+																if msg[-1] not in string.whitespace:
+																	checklist.append("false")
+																else:
+																	checklist.append("true")
+														except:
+															del checklist[:]
+															checklist = ["true"]
+															n = 4000
+															msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
+													for msg in msglist:
+														cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(sturl,msg,))
+												else:
+													cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(sturl,str1,))
+											except:
+												catcherror = traceback.format_exc()
+												bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+												bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+											cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(sturl,))
+											if cur.rowcount > 0:
+												data = cur.fetchone()
+												retrievedmsg = data[0]
+												spliceretrievedmsg = retrievedmsg[:500]
+												dbid = "db-"+str(data[1])
+												keyboard = []
+												keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+												reply_markup = InlineKeyboardMarkup(keyboard)
+												update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
+										else:
+											summarystring = ""
+											for div in mydivs:
+												blockquote = div.findAll('blockquote')
+												for b in blockquote:
+													b.decompose()
+												a = div.findAll('span')
+												for link in a:
+													link.decompose()
+												p = div.findAll('p',{"class": None})
+												for para in p:
+													if para.text is not "":
+														parastring = para.text
+														if not parastring.isspace():
+															summarystring += parastring
+															summarystring += " "
+											plaintext = PlaintextParser.from_string(summarystring,Tokenizer("english"))
+											stemmer = Stemmer("english")
+											summarizer = Summarizer(stemmer)
+											summarizer.stop_words = get_stop_words("english")
+											for sentence in summarizer(plaintext.document, 3):			
+												bodyobject.append(str(sentence))
+												bodyobject.append("\n")
+												bodyobject.append("\n")
+											bodyobject.append("This is a truncated version of the article. For the full version, please switch the bot using /mode Full")
+											str1 = ''.join(bodyobject)
+											cur.execute("""INSERT INTO Truncmsg VALUES(NULL,%s,%s)""",(sturl,str1,))
+											bot.sendMessage(chat_id=update.message.chat_id, text=str1,parse_mode='HTML')
 									else:
-										cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(sturl,))
-										if cur.rowcount > 0:
-											data = cur.fetchone()
-											retrievedmsg = data[0]
-											spliceretrievedmsg = retrievedmsg[:500]
-											dbid = "db-"+str(data[1])
-											keyboard = []
-											keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
-											reply_markup = InlineKeyboardMarkup(keyboard)
-											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
+										if mode == "Full":
+											cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl = %s limit 1""",(sturl,))
+											if cur.rowcount > 0:
+												data = cur.fetchone()
+												retrievedmsg = data[0]
+												spliceretrievedmsg = retrievedmsg[:500]
+												dbid = "db-"+str(data[1])
+												keyboard = []
+												keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+												reply_markup = InlineKeyboardMarkup(keyboard)
+												update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
+										else:
+											cur.execute("""SELECT retrievedtext,retrievedid FROM Truncmsg WHERE retrievedurl = %s limit 1""",(sturl,))
+											if cur.rowcount > 0:
+												data = cur.fetchone()
+												bot.sendMessage(chat_id=update.message.chat_id, text=data[0],parse_mode='HTML')
 							except:
 								catcherror = traceback.format_exc()
 								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
@@ -236,8 +313,14 @@ class Commands():
 									chattype = update.message.chat.type
 									cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
 									if cur.rowcount == 0:
-										cur.execute("""INSERT INTO Userdb VALUES(%s,%s)""",(chatid,chattype,))
-									cur.execute("""SELECT * FROM Retrievedmsg WHERE retrievedurl = %s""",(cnaurl,))
+										cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s)""",(chatid,chattype,'Full',))
+									else:
+										data = cur.fetchone()
+										mode = data[2]										
+									if mode == "Full":
+										cur.execute("""SELECT * FROM Retrievedmsg WHERE retrievedurl = %s""",(cnaurl,))
+									else:
+										cur.execute("""SELECT * FROM Truncmsg WHERE retrievedurl = %s""",(cnaurl,))
 									if cur.rowcount == 0:
 										headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 										r = requests.get(cnaurl, headers=headers)
@@ -274,89 +357,139 @@ class Commands():
 										bodyobject.append("</i>")
 										bodyobject.append("\n")
 										bodyobject.append("\n")
-										for div in mydivs:
-											blockquote = div.findAll('blockquote')
-											for b in blockquote:
-												b.decompose()
-											br = div.findAll('br/')
-											for b in br:
-												b.decompose()
-											innerdiv = div.findAll('div')
-											for inn in innerdiv:
-												inn.decompose()	
-											strong = div.findAll('strong')
-											for s in strong:
-												s.decompose()	
-											a = div.findAll('span')
-											for link in a:
-												link.decompose()
-											f = div.findAll('figure')
-											for figure in f:
-												figure.decompose()
-											pic = div.findAll('div',{"data-css":"c-picture"})
-											for picture in pic:
-												picture.decompose()
-											p = div.findAll('p',{"class": None})
-											for para in p:
-												if para.text is not "":
-													parastring = para.text
-													if not parastring.isspace():
-														bodyobject.append(parastring)
-														bodyobject.append("\n")
-														bodyobject.append("\n")
-										str1 = ''.join(bodyobject)
-										result = 0
-										for char in str1:
-											result +=1
-										try:
-											if (result) > 4000:
-												n = 4000
-												checklist=["false"]
-												while "false" in checklist:
-													try:
-														del checklist[:]
-														n = n-1
-														print(n)
-														msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
-														for msg in msglist:
-															if msg[-1] not in string.whitespace:
-																checklist.append("false")
-															else:
-																checklist.append("true")
-													except:
-														del checklist[:]
-														checklist = ["true"]
-														n = 4000
-														msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
-												for msg in msglist:
-													cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(cnaurl,msg,))
-											else:
-												cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(cnaurl,str1,))
-										except:
-											catcherror = traceback.format_exc()
-											bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
-											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
-										cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(cnaurl,))
-										if cur.rowcount > 0:
-											data = cur.fetchone()
-											retrievedmsg = data[0]
-											spliceretrievedmsg = retrievedmsg[:500]
-											dbid = "db-"+str(data[1])
-											keyboard = []
-											keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
-											reply_markup = InlineKeyboardMarkup(keyboard)
-											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
+										if mode == "Full":
+											for div in mydivs:
+												blockquote = div.findAll('blockquote')
+												for b in blockquote:
+													b.decompose()
+												br = div.findAll('br/')
+												for b in br:
+													b.decompose()
+												innerdiv = div.findAll('div')
+												for inn in innerdiv:
+													inn.decompose()	
+												strong = div.findAll('strong')
+												for s in strong:
+													s.decompose()	
+												a = div.findAll('span')
+												for link in a:
+													link.decompose()
+												f = div.findAll('figure')
+												for figure in f:
+													figure.decompose()
+												pic = div.findAll('div',{"data-css":"c-picture"})
+												for picture in pic:
+													picture.decompose()
+												p = div.findAll('p',{"class": None})
+												for para in p:
+													if para.text is not "":
+														parastring = para.text
+														if not parastring.isspace():
+															bodyobject.append(parastring)
+															bodyobject.append("\n")
+															bodyobject.append("\n")
+											str1 = ''.join(bodyobject)
+											result = 0
+											for char in str1:
+												result +=1
+											try:
+												if (result) > 4000:
+													n = 4000
+													checklist=["false"]
+													while "false" in checklist:
+														try:
+															del checklist[:]
+															n = n-1
+															print(n)
+															msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
+															for msg in msglist:
+																if msg[-1] not in string.whitespace:
+																	checklist.append("false")
+																else:
+																	checklist.append("true")
+														except:
+															del checklist[:]
+															checklist = ["true"]
+															n = 4000
+															msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
+													for msg in msglist:
+														cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(cnaurl,msg,))
+												else:
+													cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(cnaurl,str1,))
+											except:
+												catcherror = traceback.format_exc()
+												bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+												bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+											cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(cnaurl,))
+											if cur.rowcount > 0:
+												data = cur.fetchone()
+												retrievedmsg = data[0]
+												spliceretrievedmsg = retrievedmsg[:500]
+												dbid = "db-"+str(data[1])
+												keyboard = []
+												keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+												reply_markup = InlineKeyboardMarkup(keyboard)
+												update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
+										else:
+											summarystring = ""
+											for div in mydivs:
+												blockquote = div.findAll('blockquote')
+												for b in blockquote:
+													b.decompose()
+												br = div.findAll('br/')
+												for b in br:
+													b.decompose()
+												innerdiv = div.findAll('div')
+												for inn in innerdiv:
+													inn.decompose()	
+												strong = div.findAll('strong')
+												for s in strong:
+													s.decompose()	
+												a = div.findAll('span')
+												for link in a:
+													link.decompose()
+												f = div.findAll('figure')
+												for figure in f:
+													figure.decompose()
+												pic = div.findAll('div',{"data-css":"c-picture"})
+												for picture in pic:
+													picture.decompose()
+												p = div.findAll('p',{"class": None})
+												for para in p:
+													if para.text is not "":
+														parastring = para.text
+														if not parastring.isspace():
+															summarystring += parastring
+															summarystring += " "
+											plaintext = PlaintextParser.from_string(summarystring,Tokenizer("english"))
+											stemmer = Stemmer("english")
+											summarizer = Summarizer(stemmer)
+											summarizer.stop_words = get_stop_words("english")
+											for sentence in summarizer(plaintext.document, 3):			
+												bodyobject.append(str(sentence))
+												bodyobject.append("\n")
+												bodyobject.append("\n")
+											bodyobject.append("This is a truncated version of the article. For the full version, please switch the bot using /mode Full")
+											str1 = ''.join(bodyobject)
+											cur.execute("""INSERT INTO Truncmsg VALUES(NULL,%s,%s)""",(cnaurl,str1,))
+											bot.sendMessage(chat_id=update.message.chat_id, text=str1,parse_mode='HTML')
 									else:
-										cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(cnaurl,))
-										if cur.rowcount > 0:
-											data = cur.fetchone()
-											retrievedmsg = data[0]
-											spliceretrievedmsg = retrievedmsg[:500]
-											dbid = "db-"+str(data[1])
-											keyboard = []
-											keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
-											reply_markup = InlineKeyboardMarkup(keyboard)
-											update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
+										if mode == "Full":
+											cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(cnaurl,))
+											if cur.rowcount > 0:
+												data = cur.fetchone()
+												retrievedmsg = data[0]
+												spliceretrievedmsg = retrievedmsg[:500]
+												dbid = "db-"+str(data[1])
+												keyboard = []
+												keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+												reply_markup = InlineKeyboardMarkup(keyboard)
+												update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
+										else:
+											cur.execute("""SELECT retrievedtext,retrievedid FROM Truncmsg WHERE retrievedurl = %s limit 1""",(cnaurl,))
+											if cur.rowcount > 0:
+												data = cur.fetchone()
+												bot.sendMessage(chat_id=update.message.chat_id, text=data[0],parse_mode='HTML')
 							except:
 								catcherror = traceback.format_exc()
 								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')

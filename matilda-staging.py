@@ -14,6 +14,8 @@ commands = Commands
 from telegram.ext import CommandHandler, CallbackQueryHandler
 start_handler = CommandHandler('aboutme', commands.aboutme)
 dispatcher.add_handler(start_handler)
+cmd_handler = CommandHandler('mode', commands.mode)
+dispatcher.add_handler(cmd_handler)
 cmd_handler = CommandHandler('cmd', commands.commands)
 dispatcher.add_handler(cmd_handler)
 cmd_handler = CommandHandler('supported', commands.supported)
