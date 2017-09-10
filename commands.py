@@ -1,3 +1,9 @@
+#! /usr/bin/env python3
+##
+# This makes up the core of Matilda
+# Written by xlanor
+##
+
 from telegram.ext import Updater
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.utils.helpers import escape_html, escape_markdown
@@ -54,7 +60,8 @@ class Commands():
 							bot.sendMessage(chat_id=update.message.chat_id, text=errormsg,parse_mode='Markdown')
 		except:	
 			catcherror = traceback.format_exc()
-			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def megaphone(bot,update):
 		try:
@@ -74,8 +81,8 @@ class Commands():
 									time.sleep(0.5)
 								except:
 									catcherror = traceback.format_exc()
-									bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
-									bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+									info = update.message.from_user
+									bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 									pass
 						else:
 							bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
@@ -83,7 +90,8 @@ class Commands():
 						bot.sendMessage(chat_id=update.message.chat_id, text="""HTTP 418: I'm a teapot""",parse_mode='Markdown')
 		except:	
 			catcherror = traceback.format_exc()
-			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def supported (bot,update):
 		supportsites = "Hi, these are the sites currently supported by Matilda \n"
@@ -221,7 +229,8 @@ class Commands():
 													cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(sturl,str1,))
 											except:
 												catcherror = traceback.format_exc()
-												bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+												info = update.message.from_user
+												bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 												bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 											cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(sturl,))
 											if cur.rowcount > 0:
@@ -280,16 +289,19 @@ class Commands():
 												bot.sendMessage(chat_id=update.message.chat_id, text=data[0],parse_mode='HTML')
 							except:
 								catcherror = traceback.format_exc()
-								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 		
 					except:						
 						catcherror = traceback.format_exc()
-						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 		except:
 			catcherror = traceback.format_exc()
-			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def cna(bot, update):
 		try:
@@ -420,7 +432,8 @@ class Commands():
 													cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(cnaurl,str1,))
 											except:
 												catcherror = traceback.format_exc()
-												bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+												info = update.message.from_user
+												bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 												bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 											cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(cnaurl,))
 											if cur.rowcount > 0:
@@ -494,16 +507,19 @@ class Commands():
 												bot.sendMessage(chat_id=update.message.chat_id, text=data[0],parse_mode='HTML')
 							except:
 								catcherror = traceback.format_exc()
-								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 					except:
 						catcherror = traceback.format_exc()
-						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 
-		except:			
+		except:
 			catcherror = traceback.format_exc()
-			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def stnew(bot,update):
 		try:
@@ -532,13 +548,15 @@ class Commands():
 							update.message.reply_text(replystring, reply_markup=reply_markup)
 						else:
 							bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
-					except:
+					except:						
 						catcherror = traceback.format_exc()
-						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
-		except:
+		except:						
 			catcherror = traceback.format_exc()
-			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def stsearch(bot,update):
 		try:
@@ -577,11 +595,13 @@ class Commands():
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
 					except:
 						catcherror = traceback.format_exc()
-						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 		except:
 			catcherror = traceback.format_exc()
-			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def strand(bot,update):
 		try:
@@ -618,25 +638,29 @@ class Commands():
 												checkidlist.append("true")
 											else:
 												checkidlist.append("false")
-										except:
-											error = traceback.format_exc()
-											bot.sendMessage(chat_id=errorchannel.errorchannel(error), text=error,parse_mode='HTML')
+										except:						
+											catcherror = traceback.format_exc()
+											info = update.message.from_user
+											bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 								replystring += "\n"	
 								replystring += "Please select an option below."
 								reply_markup = InlineKeyboardMarkup(keyboard)
 								update.message.reply_text(replystring, reply_markup=reply_markup)
-							except:
+							except:						
 								catcherror = traceback.format_exc()
-								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 					except:
 						catcherror = traceback.format_exc()
-						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
-		except:
+		except:						
 			catcherror = traceback.format_exc()
-			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def cnarand(bot,update):
 		try:
@@ -673,25 +697,29 @@ class Commands():
 												checkidlist.append("true")
 											else:
 												checkidlist.append("false")
-										except:
+										except:						
 											catcherror = traceback.format_exc()
-											bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+											info = update.message.from_user
+											bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 								replystring += "\n"	
 								replystring += "Please select an option below."
 								reply_markup = InlineKeyboardMarkup(keyboard)
 								update.message.reply_text(replystring, reply_markup=reply_markup)
-							except:
+							except:		
 								catcherror = traceback.format_exc()
-								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
-					except:
+					except:						
 						catcherror = traceback.format_exc()
-						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 		except:
 			catcherror = traceback.format_exc()
-			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')	
 	def cnanew(bot,update):
 		try:
@@ -720,14 +748,16 @@ class Commands():
 							update.message.reply_text(replystring, reply_markup=reply_markup)
 						else:
 							bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
-					except:
+					except:						
 						catcherror = traceback.format_exc()
-						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	
-		except:
+		except:						
 			catcherror = traceback.format_exc()
-			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')	
 	def cnasearch(bot,update):
 		try:
@@ -766,11 +796,13 @@ class Commands():
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
 					except:
 						catcherror = traceback.format_exc()
-						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
-		except:
+		except:						
 			catcherror = traceback.format_exc()
-			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def search(bot,update):
 		try:
@@ -883,8 +915,9 @@ class Commands():
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=hiddentext,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 
-		except:
+		except:						
 			catcherror = traceback.format_exc()
-			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=catcherror,parse_mode='HTML')
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 
