@@ -26,6 +26,7 @@ You can open an issue here to contact me regarding bugs.
 * /cmd (full command list)
 * /aboutme (about Matilda)
 * /supported (supported sites)
+* /mode <Full or Trunc> (Switches Matilda between Full and Truncated)
 * /cna <article> (scrapes CNA Articles)
 * /st <article>  (scrapes straits times article)
 * /cna_search <terms> (Searches for CNA Articles)
