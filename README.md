@@ -18,6 +18,8 @@ A sample version of this bot is currently running on Telegram, under @matilda_jk
 ## Credits
 * Thanks to [LFlare](https://github.com/LFlare) for giving me the idea, and letting me take a look at his source code when I was stuck.
 * [Python-Telegram-Bot](https://github.com/python-telegram-bot/python-telegram-bot) for making a wonderful wrapper, and having an excellent community who are willing to devote time to assist others.
+* [Sumy](https://github.com/miso-belica/sumy) for building a wonderful python-based text summarizer.
+* [BeautifulSoup4](https://code.launchpad.net/beautifulsoup/) for an easy to use web scraper.
 
 ## Contact
 You can open an issue here to contact me regarding bugs.
@@ -56,6 +58,7 @@ Install the following python libraries
 * Python String Utilities
 * dateutil
 * PyMySQL
+* Sumy
 
 
 Setup a MySQL Database. 
