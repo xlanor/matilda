@@ -133,6 +133,7 @@ class Commands():
 									cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
 									if cur.rowcount == 0:
 										cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s)""",(chatid,chattype,'Full',))
+										mode = "Full"
 									else:
 										data = cur.fetchone()
 										mode = data[2]
@@ -314,6 +315,7 @@ class Commands():
 									cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
 									if cur.rowcount == 0:
 										cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s)""",(chatid,chattype,'Full',))
+										mode = "Full"
 									else:
 										data = cur.fetchone()
 										mode = data[2]										
