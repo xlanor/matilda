@@ -11,7 +11,7 @@ Matilda is currently still in the development stage. Currently, I only have time
 Matilda is licensed under the [Affero General Public License Version 3](LICENSE).
 
 ## Sample
-A sample version of this bot is currently running on Telegram, under @matilda_jk_bot. 
+A sample version of this bot is currently running on Telegram, under [@matilda_jk_bot](https://t.me/matilda_jk_bot). 
 
 ![Sample Gif](https://thumbs.gfycat.com/PepperyUnrulyHarborseal-size_restricted.gif)
 
@@ -37,6 +37,8 @@ You can open an issue here to contact me regarding bugs.
 * /st_new (Latest five ST Articles)
 * /st_rand (Randomly generates 5 articles from StraitsTimes)
 * /cna_rand (Randomly generates 5 articles from CNA)
+* /subscribe (Subscribes to Updates (Automatically subscribed by default))
+* /unsub (Unsubscribes from updates)
 
 ## Admin Commands
 * /mega <text> (Sends a message to all chats that the bot has previously been used in. To use, add your user id to tokens.py)
