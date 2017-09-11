@@ -29,6 +29,48 @@ import requests
 import string
 
 class Commands():
+	def sub(bot,update):
+		try:
+			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
+				conn.autocommit(True)
+				with closing(conn.cursor()) as cur:
+					chatid = update.message.chat_id
+					cur.execute("""SELECT mode FROM Userdb WHERE chatid = %s""",(chatid,))
+					if cur.rowcount == 0:
+						registermsg = "Sorry, you are not registered!"
+						registermsg += "\n"
+						registermsg += "In order to register, please call an article with Matilda."
+						bot.sendMessage(chat_id=update.message.chat_id, text=registermsg,parse_mode='Markdown')
+					else:
+						cur.execute("""UPDATE Userdb SET sub = 'Subscribe' WHERE chatid = %s""",(int(chatid),))
+						sucessmsg = "You are now subscribed to updates from Matilda!"
+						bot.sendMessage(chat_id=update.message.chat_id, text=sucessmsg,parse_mode='Markdown')
+		except:
+			catcherror = traceback.format_exc()
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+	def unsub(bot,update):
+		try:
+			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
+				conn.autocommit(True)
+				with closing(conn.cursor()) as cur:
+					chatid = update.message.chat_id
+					cur.execute("""SELECT mode FROM Userdb WHERE chatid = %s""",(chatid,))
+					if cur.rowcount == 0:
+						registermsg = "Sorry, you are not registered!"
+						registermsg += "\n"
+						registermsg += "In order to register, please call an article with Matilda."
+						bot.sendMessage(chat_id=update.message.chat_id, text=registermsg,parse_mode='Markdown')
+					else:
+						cur.execute("""UPDATE Userdb SET sub = 'Unsub' WHERE chatid = %s""",(int(chatid),))
+						sucessmsg = "You are no longer subscribed to updates from Matilda!"
+						bot.sendMessage(chat_id=update.message.chat_id, text=sucessmsg,parse_mode='Markdown')
+		except:
+			catcherror = traceback.format_exc()
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def mode(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
@@ -72,7 +114,7 @@ class Commands():
 					print(userid)
 					if admins.adminlist(userid) == "admin":
 						megamessage = update.message.text[6:]
-						cur.execute("""SELECT chatid FROM Userdb""")
+						cur.execute("""SELECT chatid FROM Userdb WHERE sub ='Subscribe'""")
 						if cur.rowcount > 0:
 							data = cur.fetchall()
 							for each in data:
@@ -140,7 +182,7 @@ class Commands():
 									chattype = update.message.chat.type
 									cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
 									if cur.rowcount == 0:
-										cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s)""",(chatid,chattype,'Full',))
+										cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s,%s)""",(chatid,chattype,'Full','Subscribe'))
 										mode = "Full"
 									else:
 										data = cur.fetchone()
@@ -326,7 +368,7 @@ class Commands():
 									chattype = update.message.chat.type
 									cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
 									if cur.rowcount == 0:
-										cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s)""",(chatid,chattype,'Full',))
+										cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s,%s)""",(chatid,chattype,'Full','Subscribe'))
 										mode = "Full"
 									else:
 										data = cur.fetchone()
