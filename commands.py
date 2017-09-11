@@ -528,21 +528,67 @@ class Commands():
 				with closing(conn.cursor()) as cur:
 					try:
 						cur.execute("""SELECT * FROM `StraitsTimes` 
-						ORDER BY `st_time` 
+						ORDER BY `st_id` 
 						DESC LIMIT 5""")
 						data = cur.fetchall()
 						if cur.rowcount > 0:
 							counter = 1
 							keyboard = []
 							replystring = "These are the latest 5 stories\n"
+							stlist = []
 							for row in data:
 								ms_id = "st-"+str(row[0])
 								label= "Story "+ str(counter)
 								keyboard.append([InlineKeyboardButton(label, callback_data=ms_id)])
 								replystring += str(counter) + ". "
 								replystring += row[1]
-								replystring += "\n"									
+								replystring += "\n"
+								stlist.append(row[0])							
 								counter +=1
+							next5 = "nx-"+"stsearch-"+str(stlist[-1])
+							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
+							replystring += "Please select an option below."
+							reply_markup = InlineKeyboardMarkup(keyboard)
+							update.message.reply_text(replystring, reply_markup=reply_markup)
+						else:
+							bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
+					except:						
+						catcherror = traceback.format_exc()
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+		except:						
+			catcherror = traceback.format_exc()
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+	def stnext(bot,update,oldid,newid):
+		try:
+			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
+				conn.autocommit(True)
+				with closing(conn.cursor()) as cur:
+					try:
+						cur.execute("""SELECT * FROM `StraitsTimes` 
+						WHERE `st_id` < %s AND `st_id` >= %s
+						ORDER BY `st_id` DESC
+						""",(oldid,newid,))
+						data = cur.fetchall()
+						if cur.rowcount > 0:
+							counter = 1
+							keyboard = []
+							replystring = "These are the latest 5 stories\n"
+							stlist = []
+							for row in data:
+								ms_id = "st-"+str(row[0])
+								label= "Story "+ str(counter)
+								keyboard.append([InlineKeyboardButton(label, callback_data=ms_id)])
+								replystring += str(counter) + ". "
+								replystring += row[1]
+								replystring += "\n"
+								stlist.append(row[0])							
+								counter +=1
+							next5 = "nx-"+"stsearch-"+str(stlist[-1])
+							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							update.message.reply_text(replystring, reply_markup=reply_markup)
@@ -728,21 +774,67 @@ class Commands():
 				with closing(conn.cursor()) as cur:
 					try:
 						cur.execute("""SELECT * FROM `ChannelNewsAsia` 
-						ORDER BY `cna_dt` 
+						ORDER BY `cna_id` 
 						DESC LIMIT 5""")
 						data = cur.fetchall()
 						if cur.rowcount > 0:
 							counter = 1
 							keyboard = []
 							replystring = "These are the latest 5 stories\n"
+							cnlist = []
 							for row in data:
 								cna_id = "cn-"+str(row[0])
 								label= "Story "+ str(counter)
 								keyboard.append([InlineKeyboardButton(label, callback_data=cna_id)])
 								replystring += str(counter) + ". "
 								replystring += row[1]
-								replystring += "\n"									
+								replystring += "\n"
+								cnlist.append(row[0])									
 								counter +=1
+							next5 = "nx-"+"cnsearch-"+str(cnlist[-1])
+							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
+							replystring += "Please select an option below."
+							reply_markup = InlineKeyboardMarkup(keyboard)
+							update.message.reply_text(replystring, reply_markup=reply_markup)
+						else:
+							bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
+					except:						
+						catcherror = traceback.format_exc()
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+	
+		except:						
+			catcherror = traceback.format_exc()
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')	
+	def cnanext(bot,update,oldid,newid):
+		try:
+			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
+				conn.autocommit(True)
+				with closing(conn.cursor()) as cur:
+					try:
+						cur.execute("""SELECT * FROM `ChannelNewsAsia`
+						WHERE `cna_id` < %s AND `cna_id` >= %s
+						ORDER BY `cna_id`""",(oldid,newid,))
+						data = cur.fetchall()
+						if cur.rowcount > 0:
+							counter = 1
+							keyboard = []
+							replystring = "These are the latest 5 stories\n"
+							cnlist = []
+							for row in data:
+								cna_id = "cn-"+str(row[0])
+								label= "Story "+ str(counter)
+								keyboard.append([InlineKeyboardButton(label, callback_data=cna_id)])
+								replystring += str(counter) + ". "
+								replystring += row[1]
+								replystring += "\n"
+								cnlist.append(row[0])									
+								counter +=1
+							next5 = "nx-"+"cnsearch-"+str(cnlist[-1])
+							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							update.message.reply_text(replystring, reply_markup=reply_markup)
@@ -914,6 +1006,29 @@ class Commands():
 							keyboard.append([InlineKeyboardButton('Show more ↓', callback_data=showid)])
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=hiddentext,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
+					elif dbtype == "nx": #next 5
+						removenx = query.data[3:]
+						searchtype = removenx[:8]
+						removesearch = removenx[9:]
+						if searchtype == "stsearch":
+							try:
+								baseid = int(removesearch)-5
+								Commands.stnext(bot,query,removesearch,baseid)
+							except:
+								catcherror = traceback.format_exc()
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+						elif searchtype == "cnsearch":
+							try:
+								baseid = int(removesearch)-5
+								Commands.cnanext(bot,query,removesearch,baseid)
+							except:
+								catcherror = traceback.format_exc()
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+
 
 		except:						
 			catcherror = traceback.format_exc()
