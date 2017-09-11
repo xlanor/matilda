@@ -633,7 +633,7 @@ class Commands():
 							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
-							update.message.reply_text(replystring, reply_markup=reply_markup)
+							bot.edit_message_text(text=replystring,chat_id=update.message.chat_id,message_id=update.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 						else:
 							bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
 					except:						
@@ -879,7 +879,7 @@ class Commands():
 							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
-							update.message.reply_text(replystring, reply_markup=reply_markup)
+							bot.edit_message_text(text=replystring,chat_id=update.message.chat_id,message_id=update.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 						else:
 							bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
 					except:						
