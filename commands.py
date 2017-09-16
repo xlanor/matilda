@@ -27,6 +27,15 @@ import random
 import time
 import requests
 import string
+import sys  
+from PyQt4.QtGui import *  
+from PyQt4.QtCore import *  
+from PyQt4.QtWebKit import *  
+from lxml import html 
+from selenium import webdriver
+
+
+
 
 class Commands():
 	def sub(bot,update):
@@ -563,6 +572,316 @@ class Commands():
 			info = update.message.from_user
 			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+	def todayonline(bot, update):
+		try:
+			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
+				conn.autocommit(True)
+				with closing(conn.cursor()) as cur:
+					try:
+						url=update.message.text
+						todayurl = url[7:]
+						checktodayurl = todayurl[:27]
+						if checktodayurl != "http://www.todayonline.com/":
+							bot.sendMessage(chat_id=update.message.chat_id, text="""Please enter a valid url. For example, http://www.todayonline.com/<article>""",parse_mode='Markdown')
+
+						else:
+							try:
+								headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+								result = requests.get(todayurl,headers=headers)
+								print(result.status_code)
+								if (result.status_code >= 400):
+									bot.sendMessage(chat_id=update.message.chat_id, text="""This story does not exist!""",parse_mode='Markdown')
+								else:
+									if (datetime.today().weekday() <= 4): #if weekday (0-4 = Monday to Fri, 5-6 = Sat,Sun)
+										chatid = update.message.chat.id
+										chattype = update.message.chat.type
+										cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
+										if cur.rowcount == 0:
+											cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s,%s)""",(chatid,chattype,'Full','Subscribe'))
+											mode = "Full"
+										else:
+											data = cur.fetchone()
+											mode = data[2]										
+										if mode == "Full":
+											cur.execute("""SELECT * FROM Retrievedmsg WHERE retrievedurl = %s""",(todayurl,))
+										else:
+											cur.execute("""SELECT * FROM Truncmsg WHERE retrievedurl = %s""",(todayurl,))
+										if cur.rowcount == 0:
+											headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+											r = requests.get(todayurl, headers=headers)
+											c = r.content
+											soup = BeautifulSoup(c,"html.parser")
+											mydivs = soup.findAll("div", { "class" : "content" })
+											titlediv = soup.findAll("meta", {"property" : "og:title"})
+											publishdiv = soup.findAll("div", {"class" : "authoring full-date"})
+											updatediv = soup.findAll("meta", {"property" : "article:modified_time"})
+											bodyobject = []
+											publishedobject = []
+											modifiedobject = []
+											dateval = soup.findAll("span", {"class" : "date-value"})
+											dateobj = []
+											for date in dateval:
+												dt = parser.parse(date.text)
+												dateobj.append(dt)
+											if len(dateobj) > 1:
+												pubdate = min(dateobj)
+												moddate = max(dateobj)
+											else:
+												pubdate = min(dateobj)
+											for title in titlediv:
+												articletitle = title['content']
+												bodyobject.append("*")
+												bodyobject.append(articletitle)
+												bodyobject.append("*")
+												bodyobject.append("\n")
+												bodyobject.append("\n")
+											for postdate in publishdiv:
+												datelbl = postdate.findAll("span", {"class" : "date-label"})
+												for lbl in datelbl:
+													print(lbl.text)
+													if "Published:" in lbl.text:
+														publishedobject.append('Published at: ')
+														publishedobject.append(pubdate.strftime("%B %d, %Y %H:%M"))
+													else:
+														modifiedobject.append('Updated at: ')
+														modifiedobject.append(moddate.strftime("%B %d, %Y %H:%M"))
+											bodyobject.append("_")
+											bodyobject.extend(publishedobject)
+											bodyobject.append("_")
+											bodyobject.append("\n")
+											bodyobject.append("_")
+											bodyobject.extend(modifiedobject)
+											bodyobject.append("_")
+											bodyobject.append("\n")
+											bodyobject.append("\n")
+											if mode == "Full":
+												for div in mydivs:
+													blockquote = div.findAll('blockquote')
+													for b in blockquote:
+														b.decompose()
+													a = div.findAll('span')
+													for link in a:
+														link.decompose()
+													s = div.findAll('sup')
+													for sup in s:
+														sup.decompose()
+													p = div.findAll('p',{"class": None})
+													for para in p:
+														if para.text is not "":
+															parastring = escape_markdown(para.text)
+															bodyobject.append(parastring)
+															bodyobject.append("\n")
+															bodyobject.append("\n")
+												str1 = ''.join(bodyobject)
+												result = 0
+												for char in str1:
+													result +=1
+												try:
+													if (result) > 4000:
+														n = 4000
+														checklist=["false"]
+														while "false" in checklist:
+															try:
+																del checklist[:]
+																n = n-1
+																print(n)
+																msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
+																for msg in msglist:
+																	if msg[-1] not in string.whitespace:
+																		checklist.append("false")
+																	else:
+																		checklist.append("true")
+															except:
+																del checklist[:]
+																checklist = ["true"]
+																n = 4000
+																msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
+														for msg in msglist:
+															cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(todayurl,msg,))
+													else:
+														cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(todayurl,str1,))
+												except:
+													catcherror = traceback.format_exc()
+													info = update.message.from_user
+													bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+													bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+												cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(todayurl,))
+												if cur.rowcount > 0:
+													data = cur.fetchone()
+													retrievedmsg = data[0]
+													spliceretrievedmsg = retrievedmsg[:500]
+													dbid = "db-"+str(data[1])
+													keyboard = []
+													keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+													reply_markup = InlineKeyboardMarkup(keyboard)
+													update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
+											else: #if mode = trunc
+												summarystring = ""
+												for div in mydivs:
+													blockquote = div.findAll('blockquote')
+													for b in blockquote:
+														b.decompose()
+													a = div.findAll('span')
+													for link in a:
+														link.decompose()
+													s = div.findAll('sup')
+													for sup in s:
+														sup.decompose()
+													p = div.findAll('p',{"class": None})
+													for para in p:
+														if para.text is not "":
+															parastring = escape_markdown(para.text)
+															summarystring += parastring
+															summarystring += " "
+												plaintext = PlaintextParser.from_string(summarystring,Tokenizer("english"))
+												stemmer = Stemmer("english")
+												summarizer = Summarizer(stemmer)
+												summarizer.stop_words = get_stop_words("english")
+												for sentence in summarizer(plaintext.document, 3):			
+													bodyobject.append(str(sentence))
+													bodyobject.append("\n")
+													bodyobject.append("\n")
+												bodyobject.append("This is a truncated version of the article. For the full version, please switch the bot using /mode Full")
+												str1 = ''.join(bodyobject)
+												cur.execute("""INSERT INTO Truncmsg VALUES(NULL,%s,%s)""",(todayurl,str1,))
+												bot.sendMessage(chat_id=update.message.chat_id, text=str1,parse_mode='HTML')
+									else:
+										chatid = update.message.chat.id
+										chattype = update.message.chat.type
+										cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
+										if cur.rowcount == 0:
+											cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s,%s)""",(chatid,chattype,'Full','Subscribe'))
+											mode = "Full"
+										else:
+											data = cur.fetchone()
+											mode = data[2]										
+										if mode == "Full":
+											cur.execute("""SELECT * FROM Retrievedmsg WHERE retrievedurl = %s""",(todayurl,))
+										else:
+											cur.execute("""SELECT * FROM Truncmsg WHERE retrievedurl = %s""",(todayurl,))
+										if cur.rowcount == 0:
+											url = todayurl  
+											#This does the magic.Loads everything
+											browser = webdriver.PhantomJS('./phantomjs')
+											browser.get(todayurl)
+											formatted_result = browser.page_source
+											#Next build lxml tree from formatted_result
+											tree = html.fromstring(formatted_result)
+											headline = tree.xpath('//div[@class="post-title"]/h2/text()[1]')
+											pubdate = tree.xpath('//div[@class="post-byline_item"]/span/text()[1]')
+											updatedate = tree.xpath('//div[@class="post-timestamp-update"]/text()[1]')
+											contentbody = tree.xpath('//div[@class="post-content _3BQOkQI9IqOVz5LCwpdk2f_1"]/p/text()[1]')
+											bodyobject = []
+											modifiedobject = []
+											bodyobject.append("<b>")
+											bodyobject.append(headline[0])
+											bodyobject.append("</b> \n \n")
+											bodyobject.append("<i>")
+											for each in pubdate:
+												bodyobject.append(each)
+											bodyobject.append("</i> \n \n")
+											if updatedate:
+												bodyobject.append("<i>")
+												bodyobject.append(updatedate[0])
+												bodyobject.append("</i> \n \n")
+											if mode == "Full":
+												for para in contentbody:
+													bodyobject.append(para)
+													bodyobject.append("\n \n")
+												str1 = ' '.join(bodyobject)
+												result = 0
+												for char in str1:
+													result +=1
+												try:
+													if (result) > 4000:
+														n = 4000
+														checklist=["false"]
+														while "false" in checklist:
+															try:
+																del checklist[:]
+																n = n-1
+																print(n)
+																msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
+																for msg in msglist:
+																	if msg[-1] not in string.whitespace:
+																		checklist.append("false")
+																	else:
+																		checklist.append("true")
+															except:
+																del checklist[:]
+																checklist = ["true"]
+																n = 4000
+																msglist = [str1[i:i+n] for i in range(0, len(str1), n)]
+														for msg in msglist:
+															cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(todayurl,msg,))
+													else:
+														cur.execute("""INSERT INTO Retrievedmsg VALUES(NULL,%s,%s)""",(todayurl,str1,))
+												except:
+													catcherror = traceback.format_exc()
+													info = update.message.from_user
+													bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+													bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+												cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(todayurl,))
+												if cur.rowcount > 0:
+													data = cur.fetchone()
+													retrievedmsg = data[0]
+													spliceretrievedmsg = retrievedmsg[:500]
+													dbid = "db-"+str(data[1])
+													keyboard = []
+													keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+													reply_markup = InlineKeyboardMarkup(keyboard)
+													update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
+											else:
+												summarystring = ""
+												for para in contentbody:
+													summarystring += para
+													summarystring += " "
+												plaintext = PlaintextParser.from_string(summarystring,Tokenizer("english"))
+												stemmer = Stemmer("english")
+												summarizer = Summarizer(stemmer)
+												summarizer.stop_words = get_stop_words("english")
+												for sentence in summarizer(plaintext.document, 3):			
+													bodyobject.append(str(sentence))
+													bodyobject.append("\n")
+													bodyobject.append("\n")
+												bodyobject.append("This is a truncated version of the article. For the full version, please switch the bot using /mode Full")
+												str1 = ''.join(bodyobject)
+												cur.execute("""INSERT INTO Truncmsg VALUES(NULL,%s,%s)""",(todayurl,str1,))
+												bot.sendMessage(chat_id=update.message.chat_id, text=str1,parse_mode='HTML')
+										else:
+											if mode == "Full":
+												cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(todayurl,))
+												if cur.rowcount > 0:
+													data = cur.fetchone()
+													retrievedmsg = data[0]
+													spliceretrievedmsg = retrievedmsg[:500]
+													dbid = "db-"+str(data[1])
+													keyboard = []
+													keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+													reply_markup = InlineKeyboardMarkup(keyboard)
+													update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
+											else:
+												cur.execute("""SELECT retrievedtext,retrievedid FROM Truncmsg WHERE retrievedurl = %s limit 1""",(todayurl,))
+												if cur.rowcount > 0:
+													data = cur.fetchone()
+													bot.sendMessage(chat_id=update.message.chat_id, text=data[0],parse_mode='HTML') #if its a weekend
+							except:
+								catcherror = traceback.format_exc()
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+					except:
+						catcherror = traceback.format_exc()
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+
+		except:
+			catcherror = traceback.format_exc()
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+
 	def stnew(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
