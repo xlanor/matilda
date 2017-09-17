@@ -6,6 +6,7 @@ Matilda is currently still in the development stage. Currently, I only have time
 ## Supported Sites
 * Straits Times
 * ChannelNewsAsia
+* TodayOnline (Beta)
 
 ## Licensing
 Matilda is licensed under the [Affero General Public License Version 3](LICENSE).
@@ -20,6 +21,7 @@ A sample version of this bot is currently running on Telegram, under [@matilda_j
 * [Python-Telegram-Bot](https://github.com/python-telegram-bot/python-telegram-bot) for making a wonderful wrapper, and having an excellent community who are willing to devote time to assist others.
 * [Sumy](https://github.com/miso-belica/sumy) for building a wonderful python-based text summarizer.
 * [BeautifulSoup4](https://code.launchpad.net/beautifulsoup/) for an easy to use web scraper.
+* [PhantomJS](http://phantomjs.org/) for scraping JS based sites.
 
 ## Contact
 You can open an issue here to contact me regarding bugs.
@@ -29,6 +31,7 @@ You can open an issue here to contact me regarding bugs.
 * /aboutme (about Matilda)
 * /supported (supported sites)
 * /mode <Full or Trunc> (Switches Matilda between Full and Truncated)
+* /today <article> (scrapes Today Articles)
 * /cna <article> (scrapes CNA Articles)
 * /st <article>  (scrapes straits times article)
 * /cna_search <terms> (Searches for CNA Articles)
@@ -61,7 +64,9 @@ Install the following python libraries
 * dateutil
 * PyMySQL
 * Sumy
+* Selenium
 
+Download [PhantomJS](https://bitbucket.org/ariya/phantomjs/downloads/) and place it in the same directory. This is required for TodayOnline
 
 Setup a MySQL Database. 
 ![exampledb](/examples/dbschema_matilda.png)
