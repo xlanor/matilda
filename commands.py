@@ -26,11 +26,7 @@ import traceback
 import random
 import time
 import requests
-import string
-import sys  
-from PyQt4.QtGui import *  
-from PyQt4.QtCore import *  
-from PyQt4.QtWebKit import *  
+import string 
 from lxml import html 
 from selenium import webdriver
 
@@ -155,6 +151,7 @@ class Commands():
 		commandstring += "- /aboutme (about the bot) \n"
 		commandstring += "- /cmd (command list) \n"
 		commandstring += "- /mode <Full/Trunc> (Switches between Truncated and Full Article) \n"
+		commandstring += "- /today <article> (Today Articles) \n"
 		commandstring += "- /st <article> (Straits Times Scraper) \n"
 		commandstring += "- /cna <article> (Channel News Asia Scraper) \n"
 		commandstring += "- /cna\_search <search terms> (Channel News Asia search) \n"
@@ -163,6 +160,8 @@ class Commands():
 		commandstring += "- /st\_search <search terms> (Straits Times search) \n"
 		commandstring += "- /st\_new (StraitsTimes latest 5) \n"
 		commandstring += "- /st\_rand (StraitsTimes random 5 articles) \n"
+		commandstring += "- /unsub (Unsubscribe from Matilda updates) \n"
+		commandstring += "- /sub (Subscribe from Matilda updates) \n"
 		bot.sendMessage(chat_id=update.message.chat_id, text=commandstring, parse_mode='Markdown')
 	def aboutme(bot,update):
 		bot.sendMessage(chat_id=update.message.chat_id, text="My name is Matilda, and I love to read. If you're using me, so do you! Check me out on github (https://github.com/xlanor/matilda)")
@@ -592,21 +591,21 @@ class Commands():
 								if (result.status_code >= 400):
 									bot.sendMessage(chat_id=update.message.chat_id, text="""This story does not exist!""",parse_mode='Markdown')
 								else:
-									if (datetime.today().weekday() <= 4): #if weekday (0-4 = Monday to Fri, 5-6 = Sat,Sun)
-										chatid = update.message.chat.id
-										chattype = update.message.chat.type
-										cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
-										if cur.rowcount == 0:
-											cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s,%s)""",(chatid,chattype,'Full','Subscribe'))
-											mode = "Full"
-										else:
-											data = cur.fetchone()
-											mode = data[2]										
-										if mode == "Full":
-											cur.execute("""SELECT * FROM Retrievedmsg WHERE retrievedurl = %s""",(todayurl,))
-										else:
-											cur.execute("""SELECT * FROM Truncmsg WHERE retrievedurl = %s""",(todayurl,))
-										if cur.rowcount == 0:
+									chatid = update.message.chat.id
+									chattype = update.message.chat.type
+									cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
+									if cur.rowcount == 0:
+										cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s,%s)""",(chatid,chattype,'Full','Subscribe'))
+										mode = "Full"
+									else:
+										data = cur.fetchone()
+										mode = data[2]										
+									if mode == "Full":
+										cur.execute("""SELECT * FROM Retrievedmsg WHERE retrievedurl = %s""",(todayurl,))
+									else:
+										cur.execute("""SELECT * FROM Truncmsg WHERE retrievedurl = %s""",(todayurl,))
+									if cur.rowcount == 0:
+										if (datetime.today().weekday() <= 4): #if weekday (0-4 = Monday to Fri, 5-6 = Sat,Sun)
 											headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 											r = requests.get(todayurl, headers=headers)
 											c = r.content
@@ -745,21 +744,7 @@ class Commands():
 												str1 = ''.join(bodyobject)
 												cur.execute("""INSERT INTO Truncmsg VALUES(NULL,%s,%s)""",(todayurl,str1,))
 												bot.sendMessage(chat_id=update.message.chat_id, text=str1,parse_mode='HTML')
-									else:
-										chatid = update.message.chat.id
-										chattype = update.message.chat.type
-										cur.execute("""SELECT * FROM Userdb WHERE chatid = %s""",(chatid,))
-										if cur.rowcount == 0:
-											cur.execute("""INSERT INTO Userdb VALUES(%s,%s,%s,%s)""",(chatid,chattype,'Full','Subscribe'))
-											mode = "Full"
 										else:
-											data = cur.fetchone()
-											mode = data[2]										
-										if mode == "Full":
-											cur.execute("""SELECT * FROM Retrievedmsg WHERE retrievedurl = %s""",(todayurl,))
-										else:
-											cur.execute("""SELECT * FROM Truncmsg WHERE retrievedurl = %s""",(todayurl,))
-										if cur.rowcount == 0:
 											url = todayurl  
 											#This does the magic.Loads everything
 											browser = webdriver.PhantomJS('./phantomjs')
@@ -786,8 +771,9 @@ class Commands():
 												bodyobject.append("</i> \n \n")
 											if mode == "Full":
 												for para in contentbody:
-													bodyobject.append(para)
-													bodyobject.append("\n \n")
+													if para.strip() != "":
+														bodyobject.append(para)
+														bodyobject.append("\n \n")
 												str1 = ' '.join(bodyobject)
 												result = 0
 												for char in str1:
@@ -848,23 +834,23 @@ class Commands():
 												str1 = ''.join(bodyobject)
 												cur.execute("""INSERT INTO Truncmsg VALUES(NULL,%s,%s)""",(todayurl,str1,))
 												bot.sendMessage(chat_id=update.message.chat_id, text=str1,parse_mode='HTML')
+									else:
+										if mode == "Full":
+											cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(todayurl,))
+											if cur.rowcount > 0:
+												data = cur.fetchone()
+												retrievedmsg = data[0]
+												spliceretrievedmsg = retrievedmsg[:500]
+												dbid = "db-"+str(data[1])
+												keyboard = []
+												keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+												reply_markup = InlineKeyboardMarkup(keyboard)
+												update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 										else:
-											if mode == "Full":
-												cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(todayurl,))
-												if cur.rowcount > 0:
-													data = cur.fetchone()
-													retrievedmsg = data[0]
-													spliceretrievedmsg = retrievedmsg[:500]
-													dbid = "db-"+str(data[1])
-													keyboard = []
-													keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
-													reply_markup = InlineKeyboardMarkup(keyboard)
-													update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
-											else:
-												cur.execute("""SELECT retrievedtext,retrievedid FROM Truncmsg WHERE retrievedurl = %s limit 1""",(todayurl,))
-												if cur.rowcount > 0:
-													data = cur.fetchone()
-													bot.sendMessage(chat_id=update.message.chat_id, text=data[0],parse_mode='HTML') #if its a weekend
+											cur.execute("""SELECT retrievedtext,retrievedid FROM Truncmsg WHERE retrievedurl = %s limit 1""",(todayurl,))
+											if cur.rowcount > 0:
+												data = cur.fetchone()
+												bot.sendMessage(chat_id=update.message.chat_id, text=data[0],parse_mode='HTML') #if its a weekend
 							except:
 								catcherror = traceback.format_exc()
 								info = update.message.from_user
