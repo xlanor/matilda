@@ -934,7 +934,6 @@ class Commands():
 								replystring += "\n"
 								stlist.append(row[0])							
 								counter +=1
-							print(stlist)
 							next5 = "nx-"+"stsearch-"+str(stlist[-1])
 							prev5 = "pr-"+"stsearch-"+str(stlist[0])
 							if hidebtn == "true":
@@ -1185,7 +1184,6 @@ class Commands():
 								replystring += "\n"
 								cnlist.append(row[0])									
 								counter +=1
-							print(cnlist)
 							next5 = "nx-"+"cnsearch-"+str(cnlist[-1])
 							prev5 = "pr-"+"cnsearch-"+str(cnlist[0])
 							if hidebtn == "true":
@@ -1396,8 +1394,8 @@ class Commands():
 							cur.execute("""SELECT st_id FROM `StraitsTimes` ORDER BY `st_id` DESC LIMIT 1""")
 							if cur.rowcount > 0:
 								data = cur.fetchone()
-								latestid = data[0]
-								latestbaseid = int(data[0])-5
+								latestid = data[0]+1
+								latestbaseid = int(data[0])-4
 								if newhigherid < latestid:
 									Commands.stnext(bot,query,newhigherid,newbaseid,"false")
 								else:
@@ -1409,8 +1407,8 @@ class Commands():
 								cur.execute("""SELECT cna_id FROM `ChannelNewsAsia` ORDER BY `cna_id` DESC LIMIT 1""")
 								if cur.rowcount > 0:
 									data = cur.fetchone()
-									latestid = data[0]
-									latestbaseid = int(data[0])-5
+									latestid = int(data[0])+1
+									latestbaseid = int(data[0])-4
 									if newhigherid < latestid:
 										Commands.cnanext(bot,query,newhigherid,newbaseid,"false")
 									else:
