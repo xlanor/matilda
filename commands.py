@@ -909,7 +909,7 @@ class Commands():
 			info = update.message.from_user
 			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
-	def stnext(bot,update,oldid,newid):
+	def stnext(bot,update,oldid,newid,hidebtn):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
 				conn.autocommit(True)
@@ -934,8 +934,13 @@ class Commands():
 								replystring += "\n"
 								stlist.append(row[0])							
 								counter +=1
+							print(stlist)
 							next5 = "nx-"+"stsearch-"+str(stlist[-1])
-							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
+							prev5 = "pr-"+"stsearch-"+str(stlist[0])
+							if hidebtn == "true":
+								keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
+							else:
+								keyboard.append([InlineKeyboardButton("← Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=replystring,chat_id=update.message.chat_id,message_id=update.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
@@ -1156,7 +1161,7 @@ class Commands():
 			info = update.message.from_user
 			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')	
-	def cnanext(bot,update,oldid,newid):
+	def cnanext(bot,update,oldid,newid,hidebtn):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
 				conn.autocommit(True)
@@ -1164,7 +1169,7 @@ class Commands():
 					try:
 						cur.execute("""SELECT * FROM `ChannelNewsAsia`
 						WHERE `cna_id` < %s AND `cna_id` >= %s
-						ORDER BY `cna_id`""",(oldid,newid,))
+						ORDER BY `cna_id` DESC""",(oldid,newid,))
 						data = cur.fetchall()
 						if cur.rowcount > 0:
 							counter = 1
@@ -1180,8 +1185,13 @@ class Commands():
 								replystring += "\n"
 								cnlist.append(row[0])									
 								counter +=1
+							print(cnlist)
 							next5 = "nx-"+"cnsearch-"+str(cnlist[-1])
-							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
+							prev5 = "pr-"+"cnsearch-"+str(cnlist[0])
+							if hidebtn == "true":
+								keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
+							else:
+								keyboard.append([InlineKeyboardButton("← Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=replystring,chat_id=update.message.chat_id,message_id=update.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
@@ -1360,7 +1370,7 @@ class Commands():
 						if searchtype == "stsearch":
 							try:
 								baseid = int(removesearch)-5
-								Commands.stnext(bot,query,removesearch,baseid)
+								Commands.stnext(bot,query,removesearch,baseid,"false")
 							except:
 								catcherror = traceback.format_exc()
 								info = update.message.from_user
@@ -1369,13 +1379,47 @@ class Commands():
 						elif searchtype == "cnsearch":
 							try:
 								baseid = int(removesearch)-5
-								Commands.cnanext(bot,query,removesearch,baseid)
+								Commands.cnanext(bot,query,removesearch,baseid,"false")
 							except:
 								catcherror = traceback.format_exc()
 								info = update.message.from_user
 								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+					elif dbtype == "pr": #previous 5
+						removepr = query.data[3:]
+						searchtype = removepr[:8]
+						removesearch = removepr[9:]
+						if searchtype == "stsearch":
+							newbaseid = int(removesearch)+1
+							newhigherid = int(removesearch)+6
 
+							cur.execute("""SELECT st_id FROM `StraitsTimes` ORDER BY `st_id` DESC LIMIT 1""")
+							if cur.rowcount > 0:
+								data = cur.fetchone()
+								latestid = data[0]
+								latestbaseid = int(data[0])-5
+								if newhigherid < latestid:
+									Commands.stnext(bot,query,newhigherid,newbaseid,"false")
+								else:
+									Commands.stnext(bot,query,latestid,latestbaseid,"true")
+						elif searchtype == "cnsearch":
+							try:
+								newbaseid = int(removesearch)+1
+								newhigherid = int(removesearch)+6
+								cur.execute("""SELECT cna_id FROM `ChannelNewsAsia` ORDER BY `cna_id` DESC LIMIT 1""")
+								if cur.rowcount > 0:
+									data = cur.fetchone()
+									latestid = data[0]
+									latestbaseid = int(data[0])-5
+									if newhigherid < latestid:
+										Commands.cnanext(bot,query,newhigherid,newbaseid,"false")
+									else:
+										Commands.cnanext(bot,query,latestid,latestbaseid,"true")
+							except:						
+								catcherror = traceback.format_exc()
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 
 		except:						
 			catcherror = traceback.format_exc()
