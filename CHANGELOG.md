@@ -11,4 +11,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Support for TodayOnline (Weekday, Weekend)
 - Some code for a new feature (search all)
 
-## Changed
+### Changed
