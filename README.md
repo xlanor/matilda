@@ -31,6 +31,9 @@ You can open an issue here to contact me regarding bugs.
 * /aboutme (about Matilda)
 * /supported (supported sites)
 * /mode <Full or Trunc> (Switches Matilda between Full and Truncated)
+* /new (Latest 5 articles from ST/today/cna)
+* /rand (randoms 5 articles from ST/today/cna)
+* /search <terms> (Searches for ST/today/cna articles)
 * /today <article> (scrapes Today Articles)
 * /cna <article> (scrapes CNA Articles)
 * /st <article>  (scrapes straits times article)
@@ -69,7 +72,7 @@ Install the following python libraries
 Download [PhantomJS](https://bitbucket.org/ariya/phantomjs/downloads/) and place it in the same directory. This is required for TodayOnline
 
 Setup a MySQL Database. 
-![exampledb](/examples/dbschema_matilda.png)
+![exampledb](/examples/dbschema_matilda_190917.png)
 
 Run the scripts found in the [Matilda-tools](https://github.com/xlanor/matilda-tools) folder. More information is avaliable there. This will enable you to grab new articles as they come out.
 
