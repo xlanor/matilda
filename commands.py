@@ -183,6 +183,7 @@ class Commands():
 								result = requests.get(sturl,headers=headers)
 								print(result.status_code)
 								print(sturl)
+								
 								if (result.status_code >= 400):
 									bot.sendMessage(chat_id=update.message.chat_id, text="""This story does not exist!""",parse_mode='Markdown')
 								else:
@@ -871,38 +872,33 @@ class Commands():
 				conn.autocommit(True)
 				with closing(conn.cursor()) as cur:
 					try:
-						cur.execute("""SELECT a.cna_id AS id,
-							a.cna_title AS title, 
-							a.cna_link AS link, 
-							a.cna_dt AS dt,
-							"cna" as type
-							FROM ChannelNewsAsia a 
-							UNION 
-							SELECT b.today_id,b.today_title,b.today_link,b.today_dt,"today" 
-							FROM TodayOnline b 
-							UNION 
-							SELECT c.st_id,c.st_title,c.st_link,c.st_time,"st"
-							FROM StraitsTimes c 
-							ORDER by dt DESC LIMIT 5 OFFSET 5""")
+						cur.execute("""SELECT * 
+							FROM `combinedarticle` 
+							WHERE(url_site = 1 OR url_site = 2 OR url_site = 3) 
+							ORDER BY `url_dt` 
+							DESC LIMIT 5 OFFSET 0""")
 						data = cur.fetchall()
 						if cur.rowcount > 0:
 							counter = 1
 							keyboard = []
-							replystring = "These are the latest 5 stories\n"
+							replystring = "These are the latest 5 stories from all supported news sources\n"
 							for row in data:
-								if row[4] == "cna":
+								if row[5] == 2:
 									all_id = "cn-"+str(row[0])
-								elif row[4] == "today":
+									source = "CNA"
+								elif row[5] == 3:
 									all_id = "td-"+str(row[0])
-								elif row[4] == "st":
+									source = "Today"
+								elif row[5] == 1:
 									all_id = "st-"+str(row[0]) 
-								label= "Story "+ str(counter)
+									source = "ST"
+								label= "Story "+ str(counter) +" : ("+source+") "
 								keyboard.append([InlineKeyboardButton(label, callback_data=all_id)])
-								replystring += str(counter) + ". "
+								replystring += str(counter) + ". "+"("+source+")"
 								replystring += row[1]
 								replystring += "\n"						
 								counter +=1
-							next5 = "nx-"+"alsearch-"+"10"
+							next5 = "nx-"+"alsearch-"+"5"
 							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
@@ -925,39 +921,34 @@ class Commands():
 				conn.autocommit(True)
 				with closing(conn.cursor()) as cur:
 					try:
-						cur.execute("""SELECT a.cna_id AS id,
-							a.cna_title AS title, 
-							a.cna_link AS link, 
-							a.cna_dt AS dt,
-							"cna" as type
-							FROM ChannelNewsAsia a 
-							UNION 
-							SELECT b.today_id,b.today_title,b.today_link,b.today_dt,"today" 
-							FROM TodayOnline b 
-							UNION 
-							SELECT c.st_id,c.st_title,c.st_link,c.st_time,"st"
-							FROM StraitsTimes c 
-							ORDER by dt DESC LIMIT 5 OFFSET %s""",(int(offset),))
+						cur.execute("""SELECT * 
+							FROM `combinedarticle` 
+							WHERE(url_site = 1 OR url_site = 2 OR url_site = 3) 
+							ORDER BY `url_dt` DESC 
+							LIMIT 5 OFFSET %s""",(int(offset),))
 						data = cur.fetchall()
 						if cur.rowcount > 0:
 							counter = 1
 							keyboard = []
-							replystring = "These are the latest 5 stories\n"
-							nextoffset = int(offset)+5
-							prevoffset = int(offset)-5
+							replystring = "These are the latest 5 stories from all supported news sources\n"
 							for row in data:
-								if row[4] == "cna":
+								if row[5] == 2:
 									all_id = "cn-"+str(row[0])
-								elif row[4] == "today":
+									source = "CNA"
+								elif row[5] == 3:
 									all_id = "td-"+str(row[0])
-								elif row[4] == "st":
+									source = "Today"
+								elif row[5] == 1:
 									all_id = "st-"+str(row[0]) 
-								label= "Story "+ str(counter)
+									source = "ST"
+								label= "Story "+ str(counter) +" : ("+source+") "
 								keyboard.append([InlineKeyboardButton(label, callback_data=all_id)])
-								replystring += str(counter) + ". "
+								replystring += str(counter) + ". "+"("+source+") "
 								replystring += row[1]
 								replystring += "\n"						
 								counter +=1
+							nextoffset = int(offset)+5
+							prevoffset = int(offset)-5
 							next5 = "nx-"+"alsearch-"+str(nextoffset)
 							prev5 = "pr-"+"alsearch-"+str(prevoffset)
 							if hidebtn == "true":
@@ -979,31 +970,183 @@ class Commands():
 			info = update.message.from_user
 			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+	def allsearch(bot,update):
+		try:
+			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
+				conn.autocommit(True)
+				with closing(conn.cursor()) as cur:
+					try:
+						searchtext = update.message.text
+						if len(searchtext[8:]) < 5:
+							bot.sendMessage(chat_id=update.message.chat_id, text="""Please enter a longer search query!""",parse_mode='Markdown')
+						else:
+							newsearch = searchtext[8:]
+							print(newsearch)
+							qsearch = "%"+newsearch+"%"
+							cur.execute("""SELECT * 
+											FROM combinedarticle 
+											WHERE LOWER(url_title) LIKE LOWER(%s)
+											AND (url_site = 1 OR url_site = 2 OR url_site = 3) 
+											ORDER BY url_dt 
+											DESC LIMIT 5""",(qsearch,))
+							data = cur.fetchall()
+							if cur.rowcount > 0:
+								counter = 1
+								keyboard = []
+								replystring = "These are the latest 5 stories based on your search terms\n For more stories, please refine your search terms\n"
+								for row in data:
+									if row[5] == 2:
+										all_id = "cn-"+str(row[0])
+										source = "CNA"
+									elif row[5] == 3:
+										all_id = "td-"+str(row[0])
+										source = "Today"
+									elif row[5] == 1:
+										all_id = "st-"+str(row[0]) 
+										source = "ST"
+									label= "Story "+ str(counter) +" : ("+source+") "
+									keyboard.append([InlineKeyboardButton(label, callback_data=all_id)])
+									replystring += str(counter) + ". "+"("+source+") "
+									replystring += row[1]
+									replystring += "\n"					
+									counter +=1
+								replystring += "Please select an option below."
+								reply_markup = InlineKeyboardMarkup(keyboard)
+								update.message.reply_text(replystring, reply_markup=reply_markup)
+							else:
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Unable to find any results =( =(""",parse_mode='Markdown')
+					except:
+						catcherror = traceback.format_exc()
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+		except:
+			catcherror = traceback.format_exc()
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+	def allrand(bot,update):
+		try:
+			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
+				conn.autocommit(True)
+				with closing(conn.cursor()) as cur:
+					try:
+						cur.execute("""SELECT MAX(url_id) FROM combinedarticle WHERE (url_site = 1 OR url_site = 2 OR url_site = 3)""")
+						if cur.rowcount > 0:
+							data = cur.fetchone()
+							maxval = int(data[0])
+							randomidlist = []
+							confirmedidlist = []
+							checkrandom = ["false"]
+							try:
+								while "false" in checkrandom:
+									del checkrandom[:]
+									del randomidlist[:]
+									randomidlist = random.sample(range(1,maxval),1)
+									cur.execute("""SELECT url_id FROM combinedarticle WHERE url_id = %s AND (url_site = 1 OR url_site = 2 OR url_site = 3) """,(int(randomidlist[0]),))
+									if cur.rowcount > 0:
+										data = cur.fetchone()
+										urlid = data[0]
+										newstring = "'" + str(urlid) + "'"
+										confirmedidlist.append(urlid)
+										if len(confirmedidlist) < 5:
+											checkrandom.append("false")
+										else:
+											checkrandom.append("true")
+									else:
+										checkrandom.append("false")
+							except:		
+								catcherror = traceback.format_exc()
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+
+							try:
+								checkidlist = ["false"] #here, we force a while loop to start. we'll clear it later, so if the results work, it stops
+								keyboard = []
+								while "false" in checkidlist:
+									del checkidlist[:]
+									del keyboard[:]
+									del randomidlist[:] 
+									#for each loop, if it doesnt match, you're gonna want to clear your lists and start all over again.
+									randomidlist = random.sample(range(1,maxval),5)
+									print(randomidlist)
+									counter = 1
+									replystring = "These are 5 random stories from all supported news sources.\n\n"
+									for each in confirmedidlist:
+										try:
+											cur.execute("""SELECT * FROM combinedarticle WHERE url_id = %s AND (url_site = 1 OR url_site = 2 OR url_site = 3) """,(each,))
+											if cur.rowcount > 0:
+												row = cur.fetchone()
+												if row[5] == 2:
+													all_id = "cn-"+str(row[0])
+													source = "CNA"
+												elif row[5] == 3:
+													all_id = "td-"+str(row[0])
+													source = "Today"
+												elif row[5] == 1:
+													all_id = "st-"+str(row[0]) 
+													source = "ST"
+												label= "Story "+ str(counter) +" : ("+source+") "
+												keyboard.append([InlineKeyboardButton(label, callback_data=all_id)])
+												replystring += str(counter) + ". "+"("+source+") "
+												replystring += row[1]
+												replystring += "\n"									
+												counter +=1
+												checkidlist.append("true")
+											else:
+												checkidlist.append("false")
+										except:						
+											catcherror = traceback.format_exc()
+											info = update.message.from_user
+											bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+											bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+								replystring += "\n"	
+								replystring += "Please select an option below."
+								reply_markup = InlineKeyboardMarkup(keyboard)
+								update.message.reply_text(replystring, reply_markup=reply_markup)
+							except:						
+								catcherror = traceback.format_exc()
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+					except:
+						catcherror = traceback.format_exc()
+						info = update.message.from_user
+						bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+						bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+		except:						
+			catcherror = traceback.format_exc()
+			info = update.message.from_user
+			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 	def stnew(bot,update):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
 				conn.autocommit(True)
 				with closing(conn.cursor()) as cur:
 					try:
-						cur.execute("""SELECT * FROM `StraitsTimes` 
-						ORDER BY `st_id` 
-						DESC LIMIT 5""")
+						cur.execute("""SELECT * 
+							FROM `combinedarticle` 
+							WHERE url_site = 1 
+							ORDER BY `url_dt` 
+							DESC LIMIT 5 
+							OFFSET 0""")
 						data = cur.fetchall()
 						if cur.rowcount > 0:
 							counter = 1
 							keyboard = []
-							replystring = "These are the latest 5 stories\n"
-							stlist = []
+							replystring = "These are the latest 5 stories from StraitsTimes\n"
 							for row in data:
 								ms_id = "st-"+str(row[0])
+								print(ms_id)
 								label= "Story "+ str(counter)
 								keyboard.append([InlineKeyboardButton(label, callback_data=ms_id)])
 								replystring += str(counter) + ". "
 								replystring += row[1]
-								replystring += "\n"
-								stlist.append(row[0])							
+								replystring += "\n"						
 								counter +=1
-							next5 = "nx-"+"stsearch-"+str(stlist[-1])
+							next5 = "nx-"+"stsearch-"+"5"
 							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
@@ -1020,22 +1163,23 @@ class Commands():
 			info = update.message.from_user
 			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
-	def stnext(bot,update,oldid,newid,hidebtn):
+	def stnext(bot,update,offset,hidebtn):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
 				conn.autocommit(True)
 				with closing(conn.cursor()) as cur:
 					try:
-						cur.execute("""SELECT * FROM `StraitsTimes` 
-						WHERE `st_id` < %s AND `st_id` >= %s
-						ORDER BY `st_id` DESC
-						""",(oldid,newid,))
+						cur.execute("""SELECT * 
+							FROM `combinedarticle` 
+							WHERE url_site = 1 
+							ORDER BY `url_dt` 
+							DESC LIMIT 5 
+							OFFSET %s""",(int(offset),))
 						data = cur.fetchall()
 						if cur.rowcount > 0:
 							counter = 1
 							keyboard = []
-							replystring = "These are the latest 5 stories\n"
-							stlist = []
+							replystring = "These are the next 5 stories from Straits Times\n"
 							for row in data:
 								ms_id = "st-"+str(row[0])
 								label= "Story "+ str(counter)
@@ -1043,10 +1187,11 @@ class Commands():
 								replystring += str(counter) + ". "
 								replystring += row[1]
 								replystring += "\n"
-								stlist.append(row[0])							
-								counter +=1
-							next5 = "nx-"+"stsearch-"+str(stlist[-1])
-							prev5 = "pr-"+"stsearch-"+str(stlist[0])
+								counter += 1
+							nextoffset = int(offset)+5
+							prevoffset = int(offset)-5
+							next5 = "nx-"+"stsearch-"+str(nextoffset)
+							prev5 = "pr-"+"stsearch-"+str(prevoffset)
 							if hidebtn == "true":
 								keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							else:
@@ -1076,12 +1221,13 @@ class Commands():
 						if len(searchtext[11:]) < 5:
 							bot.sendMessage(chat_id=update.message.chat_id, text="""Please enter a longer search query!""",parse_mode='Markdown')
 						else:
-							newsearch = searchtext[14:]
+							newsearch = searchtext[11:]
 							qsearch = "%"+newsearch+"%"
 							cur.execute("""SELECT * 
-											FROM `StraitsTimes` 
-											WHERE LOWER(st_title) LIKE LOWER(%s)
-											ORDER BY st_time 
+											FROM combinedarticle 
+											WHERE LOWER(url_title) LIKE LOWER(%s)
+											AND url_site = 1
+											ORDER BY url_dt 
 											DESC LIMIT 5""",(qsearch,))
 							data = cur.fetchall()
 							if cur.rowcount > 0:
@@ -1117,23 +1263,50 @@ class Commands():
 				conn.autocommit(True)
 				with closing(conn.cursor()) as cur:
 					try:
-						cur.execute("""SELECT MAX(st_id) FROM StraitsTimes""")
+						cur.execute("""SELECT MAX(url_id) FROM combinedarticle WHERE url_site = 1""")
 						if cur.rowcount > 0:
 							data = cur.fetchone()
 							maxval = int(data[0])
 							randomidlist = []
+							confirmedidlist = []
+							checkrandom = ["false"]
 							try:
-								randomidlist = random.sample(range(1,maxval),5)
-								checkidlist = ["false"]
+								while "false" in checkrandom:
+									del checkrandom[:]
+									del randomidlist[:]
+									randomidlist = random.sample(range(1,maxval),1)
+									cur.execute("""SELECT url_id FROM combinedarticle WHERE url_id = %s AND url_site = 1""",(int(randomidlist[0]),))
+									if cur.rowcount > 0:
+										data = cur.fetchone()
+										urlid = data[0]
+										newstring = "'" + str(urlid) + "'"
+										confirmedidlist.append(urlid)
+										if len(confirmedidlist) < 5:
+											checkrandom.append("false")
+										else:
+											checkrandom.append("true")
+									else:
+										checkrandom.append("false")
+							except:		
+								catcherror = traceback.format_exc()
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+
+							try:
+								checkidlist = ["false"] #here, we force a while loop to start. we'll clear it later, so if the results work, it stops
 								keyboard = []
 								while "false" in checkidlist:
 									del checkidlist[:]
 									del keyboard[:]
+									del randomidlist[:] 
+									#for each loop, if it doesnt match, you're gonna want to clear your lists and start all over again.
+									randomidlist = random.sample(range(1,maxval),5)
 									counter = 1
 									replystring = "These are 5 random stories from StraitsTimes.\n\n"
-									for each in randomidlist:
+									for each in confirmedidlist:
 										try:
-											cur.execute("""SELECT * FROM StraitsTimes WHERE st_id = %s""",(each,))
+											cur.execute("""SELECT * FROM combinedarticle WHERE url_id = %s AND url_site = 1""",(each,))
 											if cur.rowcount > 0:
 												row = cur.fetchone()
 												ms_id = "st-"+str(row[0])
@@ -1176,13 +1349,37 @@ class Commands():
 				conn.autocommit(True)
 				with closing(conn.cursor()) as cur:
 					try:
-						cur.execute("""SELECT MAX(cna_id) FROM ChannelNewsAsia""")
+						cur.execute("""SELECT MAX(url_id) FROM combinedarticle WHERE url_site = 2""")
 						if cur.rowcount > 0:
 							data = cur.fetchone()
 							maxval = int(data[0])
 							randomidlist = []
+							confirmedidlist = []
+							checkrandom = ["false"]
 							try:
-								randomidlist = random.sample(range(1,maxval),5)
+								while "false" in checkrandom:
+									del checkrandom[:]
+									del randomidlist[:]
+									randomidlist = random.sample(range(1,maxval),1)
+									cur.execute("""SELECT url_id FROM combinedarticle WHERE url_id = %s AND url_site = 2""",(int(randomidlist[0]),))
+									if cur.rowcount > 0:
+										data = cur.fetchone()
+										urlid = data[0]
+										newstring = "'" + str(urlid) + "'"
+										confirmedidlist.append(urlid)
+										if len(confirmedidlist) < 5:
+											checkrandom.append("false")
+										else:
+											checkrandom.append("true")
+									else:
+										checkrandom.append("false")
+							except:		
+								catcherror = traceback.format_exc()
+								info = update.message.from_user
+								bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+
+							try:
 								checkidlist = ["false"]
 								keyboard = []
 								while "false" in checkidlist:
@@ -1190,9 +1387,9 @@ class Commands():
 									del keyboard[:]
 									counter = 1
 									replystring = "These are 5 random stories from Channel News Asia.\n\n"
-									for each in randomidlist:
+									for each in confirmedidlist:
 										try:
-											cur.execute("""SELECT * FROM ChannelNewsAsia WHERE cna_id = %s""",(each,))
+											cur.execute("""SELECT * FROM combinedarticle WHERE url_id = %s AND url_site = 2""",(each,))
 											if cur.rowcount > 0:
 												row = cur.fetchone()
 												ms_id = "cn-"+str(row[0])
@@ -1235,25 +1432,26 @@ class Commands():
 				conn.autocommit(True)
 				with closing(conn.cursor()) as cur:
 					try:
-						cur.execute("""SELECT * FROM `ChannelNewsAsia` 
-						ORDER BY `cna_id` 
-						DESC LIMIT 5""")
+						cur.execute("""SELECT * 
+							FROM `combinedarticle` 
+							WHERE url_site = 2 
+							ORDER BY `url_dt` 
+							DESC LIMIT 5 
+							OFFSET 0""")
 						data = cur.fetchall()
 						if cur.rowcount > 0:
 							counter = 1
 							keyboard = []
-							replystring = "These are the latest 5 stories\n"
-							cnlist = []
+							replystring = "These are the latest 5 stories from ChannelNewsAsia\n"
 							for row in data:
 								cna_id = "cn-"+str(row[0])
 								label= "Story "+ str(counter)
 								keyboard.append([InlineKeyboardButton(label, callback_data=cna_id)])
 								replystring += str(counter) + ". "
 								replystring += row[1]
-								replystring += "\n"
-								cnlist.append(row[0])									
+								replystring += "\n"								
 								counter +=1
-							next5 = "nx-"+"cnsearch-"+str(cnlist[-1])
+							next5 = "nx-"+"cnsearch-"+"5"
 							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
@@ -1271,20 +1469,23 @@ class Commands():
 			info = update.message.from_user
 			bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
 			bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')	
-	def cnanext(bot,update,oldid,newid,hidebtn):
+	def cnanext(bot,update,offset,hidebtn):
 		try:
 			with closing(pymysql.connect(SQL.sqlinfo('host'),SQL.sqlinfo('usn'),SQL.sqlinfo('pw'),SQL.sqlinfo('db'),charset='utf8')) as conn:
 				conn.autocommit(True)
 				with closing(conn.cursor()) as cur:
 					try:
-						cur.execute("""SELECT * FROM `ChannelNewsAsia`
-						WHERE `cna_id` < %s AND `cna_id` >= %s
-						ORDER BY `cna_id` DESC""",(oldid,newid,))
+						cur.execute("""SELECT * 
+							FROM `combinedarticle` 
+							WHERE url_site = 2 
+							ORDER BY `url_dt` 
+							DESC LIMIT 5 
+							OFFSET %s""",(int(offset),))
 						data = cur.fetchall()
 						if cur.rowcount > 0:
 							counter = 1
 							keyboard = []
-							replystring = "These are the latest 5 stories\n"
+							replystring = "These are the latest 5 stories from ChannelNewsAsia\n"
 							cnlist = []
 							for row in data:
 								cna_id = "cn-"+str(row[0])
@@ -1295,8 +1496,10 @@ class Commands():
 								replystring += "\n"
 								cnlist.append(row[0])									
 								counter +=1
-							next5 = "nx-"+"cnsearch-"+str(cnlist[-1])
-							prev5 = "pr-"+"cnsearch-"+str(cnlist[0])
+							nextoffset = int(offset)+5
+							prevoffset = int(offset)-5
+							next5 = "nx-"+"cnsearch-"+str(nextoffset)
+							prev5 = "pr-"+"cnsearch-"+str(prevoffset)
 							if hidebtn == "true":
 								keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							else:
@@ -1327,12 +1530,13 @@ class Commands():
 						if len(searchtext[12:]) < 5:
 							bot.sendMessage(chat_id=update.message.chat_id, text="""Please enter a longer search query!""",parse_mode='Markdown')
 						else:
-							newsearch = searchtext[14:]
+							newsearch = searchtext[12:]
 							qsearch = "%"+newsearch+"%"
 							cur.execute("""SELECT * 
-											FROM `ChannelNewsAsia` 
-											WHERE LOWER(cna_title) LIKE LOWER(%s)
-											ORDER BY cna_dt 
+											FROM combinedarticle 
+											WHERE LOWER(url_title) LIKE LOWER(%s)
+											AND url_site = 2
+											ORDER BY url_dt 
 											DESC LIMIT 5""",(qsearch,))
 							data = cur.fetchall()
 							if cur.rowcount > 0:
@@ -1369,45 +1573,28 @@ class Commands():
 				with closing(conn.cursor()) as cur:
 					query = update.callback_query
 					dbtype = query.data[:2]
-					if dbtype == "ms":
+					if dbtype in ['ms','st','cn', 'td']:
 						artid = query.data[3:]
-						cur.execute("""SELECT ms_url
-									FROM `Mothership`
-									WHERE ms_id = %s""",(artid))
-						data = cur.fetchone()
+						cur.execute("""SELECT url_link FROM combinedarticle WHERE url_id = %s""",(int(artid),))
 						if cur.rowcount > 0:
+							data = cur.fetchone()
 							arturl = data[0]
-							fullurl = "/laobu "+arturl
-							query.message.text = fullurl
-							Commands.laobu(bot,query)
-						else:
-							bot.sendMessage(chat_id=query.message.chat_id, text="""Oops, something went wrong :(""",parse_mode='Markdown')
-					elif dbtype == "st":
-						artid = query.data[3:]
-						cur.execute("""SELECT st_link
-									FROM `StraitsTimes`
-									WHERE st_id = %s""",(artid))
-						data = cur.fetchone()
-						if cur.rowcount > 0:
-							arturl = data[0]
-							print(arturl)
-							fullurl = "/st "+arturl
-							query.message.text = fullurl
-							Commands.straitstimes(bot,query)
-						else:
-							bot.sendMessage(chat_id=query.message.chat_id, text="""Oops, something went wrong :(""",parse_mode='Markdown')
-					elif dbtype == "cn":
-						artid = query.data[3:]
-						cur.execute("""SELECT cna_link
-									FROM `ChannelNewsAsia`
-									WHERE cna_id = %s""",(artid))
-						data = cur.fetchone()
-						if cur.rowcount > 0:
-							arturl = data[0]
-							print(arturl)
-							fullurl = "/cna "+arturl
-							query.message.text = fullurl
-							Commands.cna(bot,query)
+							if dbtype == "ms":
+								fullurl = "/laobu "+arturl
+								query.message.text = fullurl
+								Commands.laobu(bot,query)
+							elif dbtype == "st":
+								fullurl = "/st "+arturl
+								query.message.text = fullurl
+								Commands.straitstimes(bot,query)
+							elif dbtype == "cn":
+								fullurl = "/cna "+arturl
+								query.message.text = fullurl
+								Commands.cna(bot,query)
+							elif dbtype == "td":
+								fullurl = "/today "+arturl
+								query.message.text = fullurl
+								Commands.todayonline(bot,query)
 						else:
 							bot.sendMessage(chat_id=query.message.chat_id, text="""Oops, something went wrong :(""",parse_mode='Markdown')
 					elif dbtype == "db": #named db because you're pulling out of db
@@ -1478,8 +1665,7 @@ class Commands():
 						removesearch = removenx[9:]
 						if searchtype == "stsearch":
 							try:
-								baseid = int(removesearch)-5
-								Commands.stnext(bot,query,removesearch,baseid,"false")
+								Commands.stnext(bot,query,removesearch,"false")
 							except:
 								catcherror = traceback.format_exc()
 								info = update.message.from_user
@@ -1487,8 +1673,7 @@ class Commands():
 								bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
 						elif searchtype == "cnsearch":
 							try:
-								baseid = int(removesearch)-5
-								Commands.cnanext(bot,query,removesearch,baseid,"false")
+								Commands.cnanext(bot,query,removesearch,"false")
 							except:
 								catcherror = traceback.format_exc()
 								info = update.message.from_user
@@ -1509,18 +1694,11 @@ class Commands():
 						removesearch = removepr[9:]
 						if searchtype == "stsearch":
 							try:
-								newbaseid = int(removesearch)+1
-								newhigherid = int(removesearch)+6
-
-								cur.execute("""SELECT st_id FROM `StraitsTimes` ORDER BY `st_id` DESC LIMIT 1""")
-								if cur.rowcount > 0:
-									data = cur.fetchone()
-									latestid = data[0]+1
-									latestbaseid = int(data[0])-4
-									if newhigherid < latestid:
-										Commands.stnext(bot,query,newhigherid,newbaseid,"false")
-									else:
-										Commands.stnext(bot,query,latestid,latestbaseid,"true")
+								if (int(removesearch) < 5):
+									Commands.stnext(bot,query,0,"true")
+								else:
+									Commands.stnext(bot,query,removesearch,"false")
+								
 							except:						
 								catcherror = traceback.format_exc()
 								info = update.message.from_user
@@ -1529,17 +1707,10 @@ class Commands():
 
 						elif searchtype == "cnsearch":
 							try:
-								newbaseid = int(removesearch)+1
-								newhigherid = int(removesearch)+6
-								cur.execute("""SELECT cna_id FROM `ChannelNewsAsia` ORDER BY `cna_id` DESC LIMIT 1""")
-								if cur.rowcount > 0:
-									data = cur.fetchone()
-									latestid = int(data[0])+1
-									latestbaseid = int(data[0])-4
-									if newhigherid < latestid:
-										Commands.cnanext(bot,query,newhigherid,newbaseid,"false")
-									else:
-										Commands.cnanext(bot,query,latestid,latestbaseid,"true")
+								if (int(removesearch) < 5):
+									Commands.cnanext(bot,query,0,"true")
+								else:
+									Commands.cnanext(bot,query,removesearch,"false")
 							except:						
 								catcherror = traceback.format_exc()
 								info = update.message.from_user
@@ -1548,7 +1719,7 @@ class Commands():
 
 						elif searchtype == "alsearch":
 							if (int(removesearch) < 5):
-								Commands.allnext(bot,query,5,"true")
+								Commands.allnext(bot,query,0,"true")
 							else:
 								Commands.allnext(bot,query,removesearch,"false")
 		except:						
