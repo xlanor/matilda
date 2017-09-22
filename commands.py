@@ -146,9 +146,9 @@ class Commands():
 		commandstring += "- /aboutme (about the bot) \n"
 		commandstring += "- /cmd (command list) \n"
 		commandstring += "- /mode <Full/Trunc> (Switches between Truncated and Full Article) \n"
-		commandstring += "- /new (New articles from all sources)"
-		commandstring += "- /search <search terms> (Searches all sources)"
-		commandstring += "- /rand (Random 5 articles from all sources)"
+		commandstring += "- /new (New articles from all sources)\n"
+		commandstring += "- /search <search terms> (Searches all sources)\n"
+		commandstring += "- /rand (Random 5 articles from all sources)\n"
 		commandstring += "- /today <article url> (Today Articles) \n"
 		commandstring += "- /st <article url> (Straits Times Scraper) \n"
 		commandstring += "- /cna <article url> (Channel News Asia Scraper) \n"
@@ -918,7 +918,7 @@ class Commands():
 								replystring += "\n"						
 								counter +=1
 							next5 = "nx-"+"alsearch-"+"5"
-							keyboard.append([InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
+							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							update.message.reply_text(replystring, reply_markup=reply_markup)
@@ -971,9 +971,9 @@ class Commands():
 							next5 = "nx-"+"alsearch-"+str(nextoffset)
 							prev5 = "pr-"+"alsearch-"+str(prevoffset)
 							if hidebtn == "true":
-								keyboard.append([InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							else:
-								keyboard.append([InlineKeyboardButton("⬅️ Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("← Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=replystring,chat_id=update.message.chat_id,message_id=update.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
@@ -1166,7 +1166,7 @@ class Commands():
 								replystring += "\n"						
 								counter +=1
 							next5 = "nx-"+"stsearch-"+"5"
-							keyboard.append([InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
+							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							update.message.reply_text(replystring, reply_markup=reply_markup)
@@ -1212,9 +1212,9 @@ class Commands():
 							next5 = "nx-"+"stsearch-"+str(nextoffset)
 							prev5 = "pr-"+"stsearch-"+str(prevoffset)
 							if hidebtn == "true":
-								keyboard.append([InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							else:
-								keyboard.append([InlineKeyboardButton("⬅️ Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("← Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=replystring,chat_id=update.message.chat_id,message_id=update.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
@@ -1520,9 +1520,9 @@ class Commands():
 							next5 = "nx-"+"cnsearch-"+str(nextoffset)
 							prev5 = "pr-"+"cnsearch-"+str(prevoffset)
 							if hidebtn == "true":
-								keyboard.append([InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
 							else:
-								keyboard.append([InlineKeyboardButton("⬅️ Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("← Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five →",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=replystring,chat_id=update.message.chat_id,message_id=update.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
@@ -1658,7 +1658,6 @@ class Commands():
 											sent = bot.sendMessage(chat_id=query.message.chat_id, text=text,reply_markup=reply_markup,parse_mode='HTML')
 											cur.execute("""INSERT INTO multiplemsg VALUES(%s,%s,%s)""",(sent.message_id,each[0],chatid))
 						else:
-							print('singlemsg')
 							cur.execute("""SELECT b.retrievedtext FROM multiplemsg a left join Retrievedmsg b on a.retrievedid = b.retrievedid where a.multiid =  %s""",(multiid,))
 							data = cur.fetchone()
 							text = data[0]
@@ -1684,6 +1683,7 @@ class Commands():
 						removenx = query.data[3:]
 						searchtype = removenx[:8]
 						removesearch = removenx[9:]
+						bot.edit_message_text(chat_id=query.message.chat_id,message_id=query.message.message_id,text=query.message.text,parse_mode='HTML')
 						if searchtype == "stsearch":
 							try:
 								Commands.stnext(bot,query,removesearch,"false")
@@ -1713,6 +1713,7 @@ class Commands():
 						removepr = query.data[3:]
 						searchtype = removepr[:8]
 						removesearch = removepr[9:]
+						bot.edit_message_text(chat_id=query.message.chat_id,message_id=query.message.message_id,text=query.message.text,parse_mode='HTML')
 						if searchtype == "stsearch":
 							try:
 								if (int(removesearch) < 5):
