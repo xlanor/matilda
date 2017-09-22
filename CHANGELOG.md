@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.3.3-Alpha] - 2017-09-22
+### Added
+
+### Changed
+- Removed emoji from next and previous buttons
+- Some people were trying to crash the bot by spamming the buttons. Modified code to prevent that
+
+### Notes
+- Not a pretty way, but it removes the inline button on click and adds it back later.
+- If you try to spam the buttons, it will eventually end up in the buttons disappearing completely. Dont spam the button.
+
 ## [0.3.2-Alpha] - 2017-09-22
 ### Added
 - Emoji! Because emojis make the world look better
