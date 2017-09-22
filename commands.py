@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 ##
 # This makes up the core of Matilda
 # Written by xlanor
@@ -17,18 +18,12 @@ from sumy.utils import get_stop_words
 from bs4 import BeautifulSoup
 from datetime import datetime
 from dateutil import parser
-import html2text
-import html
-import pymysql
+import html2text, html, pymysql, traceback, random, time, requests, string
 from contextlib import closing
 from tokens import SQL, admins, errorchannel
-import traceback
-import random
-import time
-import requests
-import string 
 from lxml import html 
 from selenium import webdriver
+from emoji import emojize
 
 
 
@@ -151,9 +146,12 @@ class Commands():
 		commandstring += "- /aboutme (about the bot) \n"
 		commandstring += "- /cmd (command list) \n"
 		commandstring += "- /mode <Full/Trunc> (Switches between Truncated and Full Article) \n"
-		commandstring += "- /today <article> (Today Articles) \n"
-		commandstring += "- /st <article> (Straits Times Scraper) \n"
-		commandstring += "- /cna <article> (Channel News Asia Scraper) \n"
+		commandstring += "- /new (New articles from all sources)"
+		commandstring += "- /search <search terms> (Searches all sources)"
+		commandstring += "- /rand (Random 5 articles from all sources)"
+		commandstring += "- /today <article url> (Today Articles) \n"
+		commandstring += "- /st <article url> (Straits Times Scraper) \n"
+		commandstring += "- /cna <article url> (Channel News Asia Scraper) \n"
 		commandstring += "- /cna\_search <search terms> (Channel News Asia search) \n"
 		commandstring += "- /cna\_new (Channel News Asia latest 5) \n"
 		commandstring += "- /cna\_rand (Channel News Asia random 5 articles) \n"
@@ -290,7 +288,7 @@ class Commands():
 												spliceretrievedmsg = retrievedmsg[:500]
 												dbid = "db-"+str(data[1])
 												keyboard = []
-												keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+												keyboard.append([InlineKeyboardButton("Read more 📰", callback_data=dbid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 												reply_markup = InlineKeyboardMarkup(keyboard)
 												update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 										else:
@@ -320,7 +318,10 @@ class Commands():
 											bodyobject.append("This is a truncated version of the article. For the full version, please switch the bot using /mode Full")
 											str1 = ''.join(bodyobject)
 											cur.execute("""INSERT INTO Truncmsg VALUES(NULL,%s,%s)""",(sturl,str1,))
-											bot.sendMessage(chat_id=update.message.chat_id, text=str1,parse_mode='HTML')
+											keyboard = []
+											keyboard.append([InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
+											reply_markup=InlineKeyboardMarkup(keyboard)
+											bot.sendMessage(chat_id=update.message.chat_id,reply_markup = reply_markup, text=str1,parse_mode='HTML')
 									else:
 										if mode == "Full":
 											cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl = %s limit 1""",(sturl,))
@@ -330,14 +331,17 @@ class Commands():
 												spliceretrievedmsg = retrievedmsg[:500]
 												dbid = "db-"+str(data[1])
 												keyboard = []
-												keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+												keyboard.append([InlineKeyboardButton("Read more 📰", callback_data=dbid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 												reply_markup = InlineKeyboardMarkup(keyboard)
 												update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 										else:
 											cur.execute("""SELECT retrievedtext,retrievedid FROM Truncmsg WHERE retrievedurl = %s limit 1""",(sturl,))
 											if cur.rowcount > 0:
 												data = cur.fetchone()
-												bot.sendMessage(chat_id=update.message.chat_id, text=data[0],parse_mode='HTML')
+												keyboard = []
+												keyboard.append([InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
+												reply_markup=InlineKeyboardMarkup(keyboard)
+												bot.sendMessage(chat_id=update.message.chat_id, reply_markup = reply_markup, text=data[0],parse_mode='HTML')
 							except:
 								catcherror = traceback.format_exc()
 								info = update.message.from_user
@@ -493,7 +497,7 @@ class Commands():
 												spliceretrievedmsg = retrievedmsg[:500]
 												dbid = "db-"+str(data[1])
 												keyboard = []
-												keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+												keyboard.append([InlineKeyboardButton("Read more 📰", callback_data=dbid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 												reply_markup = InlineKeyboardMarkup(keyboard)
 												update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 										else:
@@ -537,8 +541,11 @@ class Commands():
 												bodyobject.append("\n")
 											bodyobject.append("This is a truncated version of the article. For the full version, please switch the bot using /mode Full")
 											str1 = ''.join(bodyobject)
+											keyboard = []
+											keyboard.append([InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
+											reply_markup=InlineKeyboardMarkup(keyboard)
 											cur.execute("""INSERT INTO Truncmsg VALUES(NULL,%s,%s)""",(cnaurl,str1,))
-											bot.sendMessage(chat_id=update.message.chat_id, text=str1,parse_mode='HTML')
+											bot.sendMessage(chat_id=update.message.chat_id,reply_markup=reply_markup, text=str1,parse_mode='HTML')
 									else:
 										if mode == "Full":
 											cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(cnaurl,))
@@ -548,14 +555,17 @@ class Commands():
 												spliceretrievedmsg = retrievedmsg[:500]
 												dbid = "db-"+str(data[1])
 												keyboard = []
-												keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+												keyboard.append([InlineKeyboardButton("Read more 📰", callback_data=dbid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 												reply_markup = InlineKeyboardMarkup(keyboard)
 												update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 										else:
 											cur.execute("""SELECT retrievedtext,retrievedid FROM Truncmsg WHERE retrievedurl = %s limit 1""",(cnaurl,))
 											if cur.rowcount > 0:
 												data = cur.fetchone()
-												bot.sendMessage(chat_id=update.message.chat_id, text=data[0],parse_mode='HTML')
+												keyboard = []
+												keyboard.append([InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
+												reply_markup=InlineKeyboardMarkup(keyboard)
+												bot.sendMessage(chat_id=update.message.chat_id,reply_markup=reply_markup, text=data[0],parse_mode='HTML')
 							except:
 								catcherror = traceback.format_exc()
 								info = update.message.from_user
@@ -710,7 +720,7 @@ class Commands():
 													spliceretrievedmsg = retrievedmsg[:500]
 													dbid = "db-"+str(data[1])
 													keyboard = []
-													keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+													keyboard.append([InlineKeyboardButton("Read more 📰", callback_data=dbid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 													reply_markup = InlineKeyboardMarkup(keyboard)
 													update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 											else: #if mode = trunc
@@ -742,7 +752,10 @@ class Commands():
 												bodyobject.append("This is a truncated version of the article. For the full version, please switch the bot using /mode Full")
 												str1 = ''.join(bodyobject)
 												cur.execute("""INSERT INTO Truncmsg VALUES(NULL,%s,%s)""",(todayurl,str1,))
-												bot.sendMessage(chat_id=update.message.chat_id, text=str1,parse_mode='HTML')
+												keyboard = []
+												keyboard.append([InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
+												reply_markup=InlineKeyboardMarkup(keyboard)
+												bot.sendMessage(chat_id=update.message.chat_id,reply_markup=reply_markup, text=str1,parse_mode='HTML')
 										else:
 											url = todayurl  
 											#This does the magic.Loads everything
@@ -812,7 +825,7 @@ class Commands():
 													spliceretrievedmsg = retrievedmsg[:500]
 													dbid = "db-"+str(data[1])
 													keyboard = []
-													keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+													keyboard.append([InlineKeyboardButton("Read more 📰", callback_data=dbid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 													reply_markup = InlineKeyboardMarkup(keyboard)
 													update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 											else:
@@ -831,7 +844,10 @@ class Commands():
 												bodyobject.append("This is a truncated version of the article. For the full version, please switch the bot using /mode Full")
 												str1 = ''.join(bodyobject)
 												cur.execute("""INSERT INTO Truncmsg VALUES(NULL,%s,%s)""",(todayurl,str1,))
-												bot.sendMessage(chat_id=update.message.chat_id, text=str1,parse_mode='HTML')
+												keyboard = []
+												keyboard.append([InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
+												reply_markup=InlineKeyboardMarkup(keyboard)
+												bot.sendMessage(chat_id=update.message.chat_id,reply_markup=reply_markup, text=str1,parse_mode='HTML')
 									else:
 										if mode == "Full":
 											cur.execute("""SELECT retrievedtext,retrievedid FROM Retrievedmsg WHERE retrievedurl=%s limit 1""",(todayurl,))
@@ -841,14 +857,17 @@ class Commands():
 												spliceretrievedmsg = retrievedmsg[:500]
 												dbid = "db-"+str(data[1])
 												keyboard = []
-												keyboard.append([InlineKeyboardButton("Read more", callback_data=dbid)])
+												keyboard.append([InlineKeyboardButton("Read more 📰", callback_data=dbid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 												reply_markup = InlineKeyboardMarkup(keyboard)
 												update.message.reply_text(spliceretrievedmsg, reply_markup=reply_markup,parse_mode='HTML')
 										else:
 											cur.execute("""SELECT retrievedtext,retrievedid FROM Truncmsg WHERE retrievedurl = %s limit 1""",(todayurl,))
 											if cur.rowcount > 0:
 												data = cur.fetchone()
-												bot.sendMessage(chat_id=update.message.chat_id, text=data[0],parse_mode='HTML') #if its a weekend
+												keyboard = []
+												keyboard.append([InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
+												reply_markup=InlineKeyboardMarkup(keyboard)
+												bot.sendMessage(chat_id=update.message.chat_id,reply_markup=reply_markup,text=data[0],parse_mode='HTML') #if its a weekend
 							except:
 								catcherror = traceback.format_exc()
 								info = update.message.from_user
@@ -899,7 +918,7 @@ class Commands():
 								replystring += "\n"						
 								counter +=1
 							next5 = "nx-"+"alsearch-"+"5"
-							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
+							keyboard.append([InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							update.message.reply_text(replystring, reply_markup=reply_markup)
@@ -952,9 +971,9 @@ class Commands():
 							next5 = "nx-"+"alsearch-"+str(nextoffset)
 							prev5 = "pr-"+"alsearch-"+str(prevoffset)
 							if hidebtn == "true":
-								keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
 							else:
-								keyboard.append([InlineKeyboardButton("← Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five →",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("⬅️ Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=replystring,chat_id=update.message.chat_id,message_id=update.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
@@ -1147,7 +1166,7 @@ class Commands():
 								replystring += "\n"						
 								counter +=1
 							next5 = "nx-"+"stsearch-"+"5"
-							keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
+							keyboard.append([InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							update.message.reply_text(replystring, reply_markup=reply_markup)
@@ -1193,9 +1212,9 @@ class Commands():
 							next5 = "nx-"+"stsearch-"+str(nextoffset)
 							prev5 = "pr-"+"stsearch-"+str(prevoffset)
 							if hidebtn == "true":
-								keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
 							else:
-								keyboard.append([InlineKeyboardButton("← Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five →",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("⬅️ Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=replystring,chat_id=update.message.chat_id,message_id=update.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
@@ -1501,9 +1520,9 @@ class Commands():
 							next5 = "nx-"+"cnsearch-"+str(nextoffset)
 							prev5 = "pr-"+"cnsearch-"+str(prevoffset)
 							if hidebtn == "true":
-								keyboard.append([InlineKeyboardButton("Next Five →",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
 							else:
-								keyboard.append([InlineKeyboardButton("← Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five →",callback_data=next5)])
+								keyboard.append([InlineKeyboardButton("⬅️ Previous Five",callback_data=prev5),InlineKeyboardButton("Next Five ➡️",callback_data=next5)])
 							replystring += "Please select an option below."
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=replystring,chat_id=update.message.chat_id,message_id=update.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
@@ -1603,6 +1622,7 @@ class Commands():
 						cur.execute("""SELECT multiid FROM multiplemsg WHERE multiid = %s AND chatid = %s""",(multiid,chatid,))
 						if cur.rowcount == 0:
 							artid = query.data[3:]
+							print(query.data)
 							cur.execute("""SELECT retrievedurl FROM Retrievedmsg WHERE retrievedid = %s""",(artid,))
 							if cur.rowcount > 0:
 								data = cur.fetchone()
@@ -1613,7 +1633,7 @@ class Commands():
 									text = data[2]
 									hideid = 'hd-'+artid
 									keyboard = []
-									keyboard.append([InlineKeyboardButton('Show less ↑', callback_data=hideid)])
+									keyboard.append([InlineKeyboardButton('Hide text 📕', callback_data=hideid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 									reply_markup = InlineKeyboardMarkup(keyboard)
 									bot.edit_message_text(text=text,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 								else:
@@ -1624,7 +1644,7 @@ class Commands():
 											hideid = 'hd-'+ str(each[0])
 											text = each[2]
 											keyboard = []
-											keyboard.append([InlineKeyboardButton('Show less ↑', callback_data=hideid)])
+											keyboard.append([InlineKeyboardButton('Hide text 📕', callback_data=hideid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 											reply_markup = InlineKeyboardMarkup(keyboard)
 											bot.edit_message_text(text=text,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 											cur.execute("""INSERT INTO multiplemsg VALUES(%s,%s,%s)""",(multiid,each[0],chatid))
@@ -1633,18 +1653,19 @@ class Commands():
 											hideid = 'hd-'+ str(each[0])
 											text = each[2]
 											keyboard = []
-											keyboard.append([InlineKeyboardButton('Show less ↑', callback_data=hideid)])
+											keyboard.append([InlineKeyboardButton('Hide text 📕', callback_data=hideid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 											reply_markup = InlineKeyboardMarkup(keyboard)
 											sent = bot.sendMessage(chat_id=query.message.chat_id, text=text,reply_markup=reply_markup,parse_mode='HTML')
 											cur.execute("""INSERT INTO multiplemsg VALUES(%s,%s,%s)""",(sent.message_id,each[0],chatid))
 						else:
+							print('singlemsg')
 							cur.execute("""SELECT b.retrievedtext FROM multiplemsg a left join Retrievedmsg b on a.retrievedid = b.retrievedid where a.multiid =  %s""",(multiid,))
 							data = cur.fetchone()
 							text = data[0]
 							artid = query.data[3:]
 							hideid = 'hd-'+artid
 							keyboard = []
-							keyboard.append([InlineKeyboardButton('Show less ↑', callback_data=hideid)])
+							keyboard.append([InlineKeyboardButton('Hide text 📕', callback_data=hideid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=text,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 					elif dbtype == "hd": #named hd because you're hiding msg
@@ -1656,7 +1677,7 @@ class Commands():
 							hiddentext = text[:500]
 							showid = 'db-'+artid
 							keyboard = []
-							keyboard.append([InlineKeyboardButton('Show more ↓', callback_data=showid)])
+							keyboard.append([InlineKeyboardButton('Read More 📖', callback_data=showid),InlineKeyboardButton("Delete 🗑️",callback_data="dl")])
 							reply_markup = InlineKeyboardMarkup(keyboard)
 							bot.edit_message_text(text=hiddentext,chat_id=query.message.chat_id,message_id=query.message.message_id,reply_markup=reply_markup,parse_mode='HTML')
 					elif dbtype == "nx": #next 5
@@ -1722,6 +1743,15 @@ class Commands():
 								Commands.allnext(bot,query,0,"true")
 							else:
 								Commands.allnext(bot,query,removesearch,"false")
+					elif dbtype == "dl":
+						try:
+							bot.delete_message(chat_id = query.message.chat_id, message_id = query.message.message_id)
+						except:						
+							catcherror = traceback.format_exc()
+							info = update.message.from_user
+							bot.sendMessage(chat_id=errorchannel.errorchannel('error'), text=str(catcherror)+str(info),parse_mode='HTML')
+							bot.sendMessage(chat_id=update.message.chat_id, text="""Something has gone wrong. An error log has been generated for our trained chinchillas to work on it. We're sorry! =(""",parse_mode='Markdown')
+
 		except:						
 			catcherror = traceback.format_exc()
 			info = update.message.from_user
