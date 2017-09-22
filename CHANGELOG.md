@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - The bot may go down and/or return errors over this period of time.
 - All previously generated inline buttons / articles will no longer work.
 
+## [Released]
 ## [0.3.1-Alpha] - 2017-09-19
 ### Added
 - /new, /search and /rand commands.
