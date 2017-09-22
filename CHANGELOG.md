@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.3.2-Alpha] - 2017-09-22
+### Added
+- Emoji! Because emojis make the world look better
+- Delete button function - clear your messages after you've read them so that you don't spam your chat up :)
+
+### Changed
+
+### Notes
+- This will be the last update with new features until database restructuring is done
+- Maintainence will take place from Sept 23 - Sept 24.
+- The bot may go down and/or return errors over this period of time.
+- All previously generated inline buttons / articles will no longer work.
+
 ## [0.3.1-Alpha] - 2017-09-19
 ### Added
 - /new, /search and /rand commands.
